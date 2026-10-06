@@ -34,6 +34,18 @@ import { applyForegroundActivity, applyCancellationPending } from "./session-act
 
 const debug = createDebugLogger("session:state");
 
+function isStaleAgentctlObservation(
+  store: StoreApi<AppState>,
+  sessionId: string,
+  timestamp: string | undefined,
+): boolean {
+  const previous = parseStrictRfc3339Timestamp(
+    store.getState().sessionAgentctl?.itemsBySessionId[sessionId]?.updatedAt,
+  );
+  const incoming = parseStrictRfc3339Timestamp(timestamp);
+  return previous !== null && incoming !== null && incoming < previous;
+}
+
 const TERMINAL_SESSION_STATES: ReadonlySet<TaskSessionState> = new Set([
   "COMPLETED",
   "CANCELLED",
@@ -132,6 +144,7 @@ function maybePromoteAgentctlReady(
   newState: TaskSessionState | undefined,
   timestamp: string | undefined,
 ): void {
+  if (isStaleAgentctlObservation(store, sessionId, timestamp)) return;
   const state = store.getState();
   const current = state.sessionAgentctl?.itemsBySessionId?.[sessionId];
   const session = state.taskSessions?.items?.[sessionId];
@@ -989,6 +1002,7 @@ export function registerTaskSessionHandlers(store: StoreApi<AppState>): WsHandle
     "session.agentctl_starting": (message) => {
       const payload = message.payload;
       if (!payload?.session_id) return;
+      if (isStaleAgentctlObservation(store, payload.session_id, message.timestamp)) return;
       store
         .getState()
         .invalidateConfirmedConfigOptions(payload.session_id, payload.agent_execution_id);
@@ -1002,6 +1016,7 @@ export function registerTaskSessionHandlers(store: StoreApi<AppState>): WsHandle
     "session.agentctl_ready": (message) => {
       const payload = message.payload;
       if (!payload?.session_id) return;
+      if (isStaleAgentctlObservation(store, payload.session_id, message.timestamp)) return;
       store.getState().setSessionAgentctlStatus(payload.session_id, {
         status: "ready",
         agentExecutionId: payload.agent_execution_id,
@@ -1014,6 +1029,7 @@ export function registerTaskSessionHandlers(store: StoreApi<AppState>): WsHandle
     "session.agentctl_error": (message) => {
       const payload = message.payload;
       if (!payload?.session_id) return;
+      if (isStaleAgentctlObservation(store, payload.session_id, message.timestamp)) return;
       store.getState().setSessionAgentctlStatus(payload.session_id, {
         status: "error",
         agentExecutionId: payload.agent_execution_id,
