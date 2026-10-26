@@ -4,6 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+<<<<<<< HEAD
+=======
+	contract "github.com/kandev/kandev/internal/common/sandbox"
+	"net/url"
+>>>>>>> 1e370d684fe0 (feat: review sandbox policy changes before restart)
 	"os"
 	"path/filepath"
 	"reflect"
@@ -1025,6 +1030,7 @@ const (
 )
 
 type ResumeOptions struct {
+	SandboxRestartReview         *contract.RestartPolicyReview
 	RequiredNativeConversationID string
 	InterruptedSubmissionID      string
 	InterruptedStreamID          string
@@ -2119,6 +2125,7 @@ func newResumeLaunchRequest(
 		executionProfileID = session.AgentProfileID
 	}
 	req := &LaunchAgentRequest{
+		SandboxRestartReview:         options.SandboxRestartReview,
 		WorkspaceLayout:              task.InitialWorkspaceLayout,
 		ResumePassthrough:            startAgent && session.IsPassthrough && !options.ForceContextContinuation,
 		TaskID:                       task.ID,
