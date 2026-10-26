@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { EntityReference } from "@/lib/types/entity-reference";
 import {
@@ -108,5 +108,28 @@ describe("entity reference registration identity", () => {
       selection_id: "selection-stable",
       association_mode: "context_only",
     });
+  });
+});
+
+describe("entity reference registration controls", () => {
+  it("makes the trigger and choices actionable and coarse-pointer sized", () => {
+    render(
+      <ReferenceRegistrationControl
+        referenceLabel="#acme/app#12"
+        mode="context_only"
+        onModeChange={vi.fn()}
+      />,
+    );
+
+    const trigger = screen.getByTestId("reference-registration-trigger");
+    expect(trigger.className).toContain("cursor-pointer");
+    expect(trigger.className).toContain("[@media(pointer:coarse)]:min-h-11");
+    fireEvent.click(trigger);
+
+    for (const mode of ["link_on_send", "context_only"]) {
+      const choice = screen.getByTestId(`reference-registration-${mode}`);
+      expect(choice.className).toContain("cursor-pointer");
+      expect(choice.className).toContain("[@media(pointer:coarse)]:min-h-11");
+    }
   });
 });

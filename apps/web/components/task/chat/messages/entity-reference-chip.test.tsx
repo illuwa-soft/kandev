@@ -110,6 +110,8 @@ describe("EntityReferenceChip retry actions", () => {
     const retry = screen.getByRole("button", { name: "task:referenceRegistrationRetry" });
     expect(retry.className.split(/\s+/u)).toContain("min-h-7");
     expect(retry.className.split(/\s+/u)).toContain("max-md:min-h-11");
+    expect(retry.className.split(/\s+/u)).toContain("cursor-pointer");
+    expect(retry.className.split(/\s+/u)).toContain("[@media(pointer:coarse)]:min-h-11");
     fireEvent.click(retry);
 
     await waitFor(() =>
@@ -151,6 +153,8 @@ describe("EntityReferenceChip relink actions", () => {
     const linkAgain = screen.getByTestId("entity-reference-registration-link-again");
     expect(linkAgain.className.split(/\s+/u)).toContain("min-h-7");
     expect(linkAgain.className.split(/\s+/u)).toContain("max-md:min-h-11");
+    expect(linkAgain.className.split(/\s+/u)).toContain("cursor-pointer");
+    expect(linkAgain.className.split(/\s+/u)).toContain("[@media(pointer:coarse)]:min-h-11");
     fireEvent.click(linkAgain);
 
     await waitFor(() =>

@@ -19,10 +19,11 @@ import (
 
 type acceptedGitHubProviderStub struct {
 	fakeGitHubChangeLinks
-	store         *github.Store
-	registerErr   error
-	registerCalls int
-	beforeCommit  func()
+	store           *github.Store
+	registerErr     error
+	registerCalls   int
+	alreadyActivePR *github.TaskPR
+	beforeCommit    func()
 }
 
 func (p *acceptedGitHubProviderStub) RegisterExistingPRByURLForWorkspaceAtRevision(
@@ -36,6 +37,9 @@ func (p *acceptedGitHubProviderStub) RegisterExistingPRByURLForWorkspaceAtRevisi
 	p.registerCalls++
 	if p.registerErr != nil {
 		return nil, p.registerErr
+	}
+	if p.alreadyActivePR != nil {
+		return p.alreadyActivePR, nil
 	}
 	if p.beforeCommit != nil {
 		p.beforeCommit()
@@ -111,6 +115,18 @@ func testRegistrationActorResolver(_ context.Context, actorID string) (authn.Ide
 	return authn.Identity{UserID: actorID, Role: authn.RoleMember}, true
 }
 
+func TestTaskChangeRegistrationProcessorCanRestart(t *testing.T) {
+	taskSvc, repository, db := newTaskChangeCoordinatorHarnessWithDB(t)
+	processor := newTaskChangeRegistrationProcessor(
+		repository, taskSvc, taskChangeLinkCoordinator{}, db, nil, testRegistrationActorResolver,
+	)
+
+	processor.Start(context.Background())
+	processor.Stop()
+	processor.Start(context.Background())
+	processor.Stop()
+}
+
 func (p *acceptedGitHubProviderStub) RegisterTaskPRObservationTx(
 	ctx context.Context, tx *sqlx.Tx, registration *github.TaskPR, restoreDetached bool, expectedRevision int64,
 ) (*github.TaskPR, bool, error) {
@@ -177,6 +193,46 @@ func TestTaskChangeRegistrationProcessorRetriesAcceptedMessage(t *testing.T) {
 	}
 	if provider.registerCalls != 2 {
 		t.Fatalf("provider registration attempts = %d, want one failed attempt and one retry", provider.registerCalls)
+	}
+}
+
+func TestTaskChangeRegistrationProcessorPersistsRevisionForAlreadyActiveAssociation(t *testing.T) {
+	ctx := context.Background()
+	taskSvc, repository, db := newTaskChangeCoordinatorHarnessWithDB(t)
+	seedTaskChangeCoordinatorTask(t, repository, "ws-registration-existing", "task-registration-existing", "repo-registration-existing",
+		"https://github.com", "acme", "api")
+	if _, err := db.ExecContext(ctx, `UPDATE repositories SET provider_repo_id = 'provider-repo-17' WHERE id = ?`, "repo-registration-existing"); err != nil {
+		t.Fatalf("set provider repository identity: %v", err)
+	}
+	store, err := github.NewStore(db, db)
+	if err != nil {
+		t.Fatalf("initialize GitHub store: %v", err)
+	}
+	message := acceptRegistrationTestMessage(t, ctx, repository, "task-registration-existing", "selection-existing")
+	intent, err := repository.GetTaskChangeRegistrationIntentBySelection(ctx, message.TaskID, "selection-existing")
+	if err != nil || intent == nil {
+		t.Fatalf("accepted intent = (%+v, err=%v)", intent, err)
+	}
+
+	provider := &acceptedGitHubProviderStub{store: store, alreadyActivePR: &github.TaskPR{
+		ID: "already-active", TaskID: message.TaskID, RepositoryID: "repo-registration-existing",
+		Owner: "acme", Repo: "api", PRNumber: 17, PRURL: "https://github.com/acme/api/pull/17",
+		ProviderHost: "https://github.com", ConnectionScope: "builtin:ws-registration-existing",
+		ProviderRepositoryID: "provider-repo-17", AssociationRevision: 7,
+	}}
+	coordinator := taskChangeLinkCoordinator{tasks: taskSvc, github: provider}
+	processor := newTaskChangeRegistrationProcessor(repository, taskSvc, coordinator, db, nil, testRegistrationActorResolver)
+	if err := processor.processIntent(ctx, intent); err != nil {
+		t.Fatalf("process already-active registration: %v", err)
+	}
+
+	succeeded, err := repository.GetTaskChangeRegistrationIntent(ctx, intent.TaskID, intent.ID)
+	if err != nil || succeeded == nil || succeeded.State != "succeeded" || succeeded.AssociationRevision == nil ||
+		*succeeded.AssociationRevision != 7 {
+		t.Fatalf("completed intent = (%+v, err=%v), want succeeded at association revision 7", succeeded, err)
+	}
+	if provider.registerCalls != 1 {
+		t.Fatalf("provider registration calls = %d, want 1", provider.registerCalls)
 	}
 }
 

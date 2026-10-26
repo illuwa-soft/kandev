@@ -95,7 +95,7 @@ function RegistrationChoices({
           role="radio"
           aria-checked={activeMode === choice.mode}
           data-testid={`reference-registration-${choice.mode}`}
-          className="flex min-h-7 w-full items-center rounded-md px-3 text-left text-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-md:min-h-11"
+          className="flex min-h-7 w-full cursor-pointer items-center rounded-md px-3 text-left text-sm hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-md:min-h-11 [@media(pointer:coarse)]:min-h-11"
           onClick={() => onModeChange(choice.mode)}
         >
           <span
@@ -147,7 +147,7 @@ export function ReferenceRegistrationControl({
       aria-haspopup={usesTouchDrawer ? "dialog" : "menu"}
       aria-expanded={open}
       data-testid="reference-registration-trigger"
-      className="inline-flex min-h-7 max-w-full items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 align-baseline text-xs text-primary hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-md:min-h-11"
+      className="inline-flex min-h-7 max-w-full cursor-pointer items-center gap-1 rounded bg-primary/10 px-1.5 py-0.5 align-baseline text-xs text-primary hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-md:min-h-11 [@media(pointer:coarse)]:min-h-11"
     >
       <span className="max-w-[12rem] truncate">{referenceLabel}</span>
       <span className="shrink-0 opacity-80">| {modeLabel}</span>

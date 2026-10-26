@@ -168,7 +168,7 @@ func newTaskChangeRegistrationProcessor(
 ) *taskChangeRegistrationProcessor {
 	return &taskChangeRegistrationProcessor{
 		repository: repository, tasks: tasks, coordinator: coordinator, db: db, logger: log, resolveActor: resolveActor,
-		wake: make(chan struct{}, 1), done: make(chan struct{}),
+		wake: make(chan struct{}, 1),
 	}
 }
 
@@ -182,9 +182,10 @@ func (p *taskChangeRegistrationProcessor) Start(ctx context.Context) {
 		return
 	}
 	workerCtx, cancel := context.WithCancel(ctx)
-	p.cancel, p.started = cancel, true
+	done := make(chan struct{})
+	p.cancel, p.done, p.started = cancel, done, true
 	p.mu.Unlock()
-	go p.run(workerCtx)
+	go p.run(workerCtx, done)
 }
 
 func (p *taskChangeRegistrationProcessor) Stop() {
@@ -196,11 +197,11 @@ func (p *taskChangeRegistrationProcessor) Stop() {
 		p.mu.Unlock()
 		return
 	}
-	cancel, done := p.cancel, p.done
-	p.started = false
-	p.mu.Unlock()
-	cancel()
+	p.cancel()
+	done := p.done
 	<-done
+	p.cancel, p.done, p.started = nil, nil, false
+	p.mu.Unlock()
 }
 
 func (p *taskChangeRegistrationProcessor) NotifyAcceptedMessage(taskID, messageID string) {
@@ -307,8 +308,8 @@ func (p *taskChangeRegistrationProcessor) ActTaskChangeRegistration(
 	return p.notifyRegistrationSource(ctx, intent)
 }
 
-func (p *taskChangeRegistrationProcessor) run(ctx context.Context) {
-	defer close(p.done)
+func (p *taskChangeRegistrationProcessor) run(ctx context.Context, done chan struct{}) {
+	defer close(done)
 	ticker := time.NewTicker(registrationWorkerInterval)
 	defer ticker.Stop()
 	reconcileTicker := time.NewTicker(registrationReconciliationInterval)
@@ -611,9 +612,9 @@ func (p *taskChangeRegistrationProcessor) finishAcceptedIntent(
 	if readErr != nil || current == nil || current.State == registrationStateSucceeded {
 		return p.notifyRegistrationSource(ctx, intent)
 	}
-	return p.finishIntent(
+	return p.finishIntentWithAssociationRevision(
 		ctx, intent, registrationStateSucceeded, "", result.identity,
-		receiptWithRevision(result.receipt, result.revision),
+		receiptWithRevision(result.receipt, result.revision), int64Pointer(result.revision),
 	)
 }
 
@@ -700,6 +701,17 @@ func (p *taskChangeRegistrationProcessor) finishIntent(
 	resolvedIdentity json.RawMessage,
 	operationReceipt string,
 ) error {
+	return p.finishIntentWithAssociationRevision(ctx, intent, state, errorCode, resolvedIdentity, operationReceipt, nil)
+}
+
+func (p *taskChangeRegistrationProcessor) finishIntentWithAssociationRevision(
+	ctx context.Context,
+	intent *tasksqlite.TaskChangeRegistrationIntent,
+	state, errorCode string,
+	resolvedIdentity json.RawMessage,
+	operationReceipt string,
+	associationRevision *int64,
+) error {
 	tx, err := p.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return err
@@ -707,7 +719,7 @@ func (p *taskChangeRegistrationProcessor) finishIntent(
 	defer func() { _ = tx.Rollback() }()
 	updated, err := p.repository.SetTaskChangeRegistrationIntentResultTx(
 		ctx, tx, intent.ID, intent.State, state, errorCode, resolvedIdentity,
-		intent.ExpectedRevision, nil, operationReceipt,
+		intent.ExpectedRevision, associationRevision, operationReceipt,
 	)
 	if err != nil {
 		return err

@@ -1,4 +1,5 @@
 import { fetchJson, type ApiRequestOptions } from "../client";
+import { generateUUID } from "@/lib/utils";
 
 export type TaskChangeRegistrationAction = "retry" | "relink";
 
@@ -15,7 +16,7 @@ export function actTaskChangeRegistration(
       init: {
         ...(options?.init ?? {}),
         method: "POST",
-        body: JSON.stringify({ action, operation_id: createOperationId() }),
+        body: JSON.stringify({ action, operation_id: generateUUID() }),
       },
     },
   );
@@ -27,11 +28,4 @@ export function retryTaskChangeRegistration(
   options?: ApiRequestOptions,
 ) {
   return actTaskChangeRegistration(taskId, registrationId, "retry", options);
-}
-
-function createOperationId(): string {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-    return crypto.randomUUID();
-  }
-  return `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
 }

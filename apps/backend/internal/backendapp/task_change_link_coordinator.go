@@ -144,8 +144,8 @@ func (c taskChangeLinkCoordinator) LinkTaskChange(ctx context.Context, req mcp.T
 		if err != nil {
 			return nil, err
 		}
-		if req.Link.RepositoryID != "" && req.Link != resolved {
-			return nil, fmt.Errorf("URL does not match the asserted task change identity")
+		if err := assertTaskChangeLinkMatchesURL(req.Link, resolved); err != nil {
+			return nil, err
 		}
 		req.Link = resolved
 	}
@@ -156,6 +156,16 @@ func (c taskChangeLinkCoordinator) LinkTaskChange(ctx context.Context, req mcp.T
 }
 
 func (c taskChangeLinkCoordinator) UnlinkTaskChange(ctx context.Context, req mcp.TaskChangeLinkRequest) ([]mcp.TaskChangeLink, error) {
+	if req.URL != "" {
+		resolved, err := c.resolveTaskChangeURL(ctx, req.TaskID, req.URL)
+		if err != nil {
+			return nil, err
+		}
+		if err := assertTaskChangeLinkMatchesURL(req.Link, resolved); err != nil {
+			return nil, err
+		}
+		req.Link = resolved
+	}
 	if err := c.unlink(ctx, req.TaskID, req.Link); err != nil {
 		return nil, err
 	}
@@ -173,6 +183,16 @@ func (c taskChangeLinkCoordinator) replaceTaskChangeResult(
 	result := mcp.TaskChangeLinkMutationResult{TaskID: req.TaskID}
 	if req.Old == nil {
 		return c.taskChangeMutationFailure(req.TaskID, fmt.Errorf("current task change identity is required"))
+	}
+	if req.URL != "" {
+		resolved, err := c.resolveTaskChangeURL(ctx, req.TaskID, req.URL)
+		if err != nil {
+			return c.taskChangeMutationFailure(req.TaskID, err)
+		}
+		if err := assertTaskChangeLinkMatchesURL(req.Link, resolved); err != nil {
+			return c.taskChangeMutationFailure(req.TaskID, err)
+		}
+		req.Link = resolved
 	}
 	// Replacing an association with the exact same identity is already the
 	// requested final state. Do not detach it after the idempotent link.
@@ -195,16 +215,6 @@ func (c taskChangeLinkCoordinator) replaceTaskChangeResult(
 	newAlreadyLinked := taskChangeLinksContain(before, req.Link)
 	// Resolve and persist the incoming association first. A failed provider
 	// fetch therefore leaves the current association untouched.
-	if req.URL != "" {
-		resolved, resolveErr := c.resolveTaskChangeURL(ctx, req.TaskID, req.URL)
-		if resolveErr != nil {
-			return c.taskChangeMutationFailure(req.TaskID, resolveErr)
-		}
-		if req.Link.RepositoryID != "" && req.Link != resolved {
-			return c.taskChangeMutationFailure(req.TaskID, fmt.Errorf("URL does not match the asserted task change identity"))
-		}
-		req.Link = resolved
-	}
 	if err := c.link(ctx, req); err != nil {
 		c.logMutationError(req.TaskID, "link replacement", err)
 		result.OperationError = taskChangeMutationOperationError
@@ -226,6 +236,15 @@ func (c taskChangeLinkCoordinator) replaceTaskChangeResult(
 	}
 	result.Links, result.StateKnown = links, true
 	return result, nil
+}
+
+func assertTaskChangeLinkMatchesURL(asserted, resolved mcp.TaskChangeLink) error {
+	if (asserted.Provider != "" && asserted.Provider != resolved.Provider) ||
+		(asserted.RepositoryID != "" && asserted.RepositoryID != resolved.RepositoryID) ||
+		(asserted.Number != 0 && asserted.Number != resolved.Number) {
+		return fmt.Errorf("URL does not match the asserted task change identity")
+	}
+	return nil
 }
 
 func (c taskChangeLinkCoordinator) readReplacementFailureState(
@@ -361,7 +380,7 @@ func (c taskChangeLinkCoordinator) registerGitHubObservation(
 	_, err := transactional.RegisterExistingPRByURLForWorkspaceWithCommit(
 		ctx, task.WorkspaceID, userID, task.ID, repo.ID, changeURL, restore, req.OperationID,
 		func(commitCtx context.Context, registration *github.TaskPR, restore bool, revision int64) (*github.TaskPR, bool, error) {
-			return c.commitGitHubRegistration(commitCtx, transactional, registration, restore, revision)
+			return c.commitGitHubRegistration(commitCtx, transactional, registration, restore, revision, req.OperationID)
 		},
 	)
 	return err
@@ -373,6 +392,7 @@ func (c taskChangeLinkCoordinator) commitGitHubRegistration(
 	registration *github.TaskPR,
 	restore bool,
 	revision int64,
+	operationID string,
 ) (*github.TaskPR, bool, error) {
 	tx, err := c.db.BeginTxx(ctx, nil)
 	if err != nil {
@@ -383,7 +403,7 @@ func (c taskChangeLinkCoordinator) commitGitHubRegistration(
 	if err != nil {
 		return nil, false, err
 	}
-	if err := c.persistGitHubRegistrationIntent(ctx, tx, registration, registered, revision, restore); err != nil {
+	if err := c.persistGitHubRegistrationIntent(ctx, tx, registration, registered, revision, restore, operationID); err != nil {
 		return nil, false, err
 	}
 	if err := tx.Commit(); err != nil {
@@ -432,7 +452,7 @@ func (c taskChangeLinkCoordinator) registerGitLabObservation(
 	_, err := transactional.RegisterExistingMRByURLWithCommit(
 		ctx, task.WorkspaceID, task.ID, repo.ID, changeURL, restore, req.OperationID,
 		func(commitCtx context.Context, registration *gitlab.TaskMR, restore bool, revision int64) (*gitlab.TaskMR, bool, error) {
-			return c.commitGitLabRegistration(commitCtx, transactional, registration, restore, revision)
+			return c.commitGitLabRegistration(commitCtx, transactional, registration, restore, revision, req.OperationID)
 		},
 	)
 	return err
@@ -444,6 +464,7 @@ func (c taskChangeLinkCoordinator) commitGitLabRegistration(
 	registration *gitlab.TaskMR,
 	restore bool,
 	revision int64,
+	operationID string,
 ) (*gitlab.TaskMR, bool, error) {
 	tx, err := c.db.BeginTxx(ctx, nil)
 	if err != nil {
@@ -454,7 +475,7 @@ func (c taskChangeLinkCoordinator) commitGitLabRegistration(
 	if err != nil {
 		return nil, false, err
 	}
-	if err := c.persistGitLabRegistrationIntent(ctx, tx, registration, registered, revision, restore); err != nil {
+	if err := c.persistGitLabRegistrationIntent(ctx, tx, registration, registered, revision, restore, operationID); err != nil {
 		return nil, false, err
 	}
 	if err := tx.Commit(); err != nil {
@@ -464,7 +485,7 @@ func (c taskChangeLinkCoordinator) commitGitLabRegistration(
 }
 
 func (c taskChangeLinkCoordinator) persistGitHubRegistrationIntent(
-	ctx context.Context, tx *sqlx.Tx, requested, registered *github.TaskPR, expectedRevision int64, restore bool,
+	ctx context.Context, tx *sqlx.Tx, requested, registered *github.TaskPR, expectedRevision int64, restore bool, operationID string,
 ) error {
 	snapshot, err := json.Marshal(map[string]any{
 		"url": requested.PRURL, "repository_path": requested.RepositoryPath,
@@ -481,7 +502,7 @@ func (c taskChangeLinkCoordinator) persistGitHubRegistrationIntent(
 		ConnectionScope: requested.ConnectionScope, ProviderRepositoryID: requested.ProviderRepositoryID,
 		ChangeRequestID: strconv.Itoa(requested.PRNumber), ResolvedIdentity: string(snapshot),
 		ExpectedRevision: int64Pointer(expectedRevision), AssociationRevision: int64Pointer(registered.AssociationRevision),
-		OperationID: requested.FirstOriginID, OperationFingerprint: taskChangeRegistrationFingerprint(
+		OperationID: operationID, OperationFingerprint: taskChangeRegistrationFingerprint(
 			requested.TaskID, requested.ProviderHost, requested.ConnectionScope, requested.ProviderRepositoryID,
 			strconv.Itoa(requested.PRNumber), strconv.FormatInt(expectedRevision, 10), strconv.FormatBool(restore)),
 		OperationReceipt: registered.ID, State: "succeeded",
@@ -489,7 +510,7 @@ func (c taskChangeLinkCoordinator) persistGitHubRegistrationIntent(
 }
 
 func (c taskChangeLinkCoordinator) persistGitLabRegistrationIntent(
-	ctx context.Context, tx *sqlx.Tx, requested, registered *gitlab.TaskMR, expectedRevision int64, restore bool,
+	ctx context.Context, tx *sqlx.Tx, requested, registered *gitlab.TaskMR, expectedRevision int64, restore bool, operationID string,
 ) error {
 	snapshot, err := json.Marshal(map[string]any{
 		"url": requested.MRURL, "repository_path": requested.RepositoryPath,
@@ -507,7 +528,7 @@ func (c taskChangeLinkCoordinator) persistGitLabRegistrationIntent(
 		ConnectionScope: requested.ConnectionScope, ProviderRepositoryID: requested.ProviderRepositoryID,
 		ChangeRequestID: strconv.FormatInt(int64(requested.MRIID), 10), ResolvedIdentity: string(snapshot),
 		ExpectedRevision: int64Pointer(expectedRevision), AssociationRevision: int64Pointer(registered.AssociationRevision),
-		OperationID: requested.FirstOriginID, OperationFingerprint: taskChangeRegistrationFingerprint(
+		OperationID: operationID, OperationFingerprint: taskChangeRegistrationFingerprint(
 			requested.TaskID, requested.Host, requested.ConnectionScope, requested.ProviderRepositoryID,
 			strconv.Itoa(requested.MRIID), strconv.FormatInt(expectedRevision, 10), strconv.FormatBool(restore)),
 		OperationReceipt: registered.ID, State: "succeeded",

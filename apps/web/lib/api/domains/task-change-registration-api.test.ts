@@ -3,6 +3,7 @@ import {
   actTaskChangeRegistration,
   retryTaskChangeRegistration,
 } from "./task-change-registration-api";
+import * as utils from "@/lib/utils";
 
 const fetchSpy = vi.fn<typeof fetch>();
 
@@ -11,9 +12,28 @@ beforeEach(() => {
   vi.stubGlobal("fetch", fetchSpy);
 });
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
 
 describe("task change registration actions", () => {
+  it("uses the shared UUID generator for operation IDs", async () => {
+    const generateUUID = vi.spyOn(utils, "generateUUID").mockReturnValue("shared-operation-id");
+    fetchSpy.mockResolvedValueOnce(
+      new Response(JSON.stringify({ accepted: true, state: "pending" }), {
+        status: 202,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+
+    await retryTaskChangeRegistration("task-1", "selection-1", { baseUrl: "http://api.test" });
+
+    const init = fetchSpy.mock.calls[0][1];
+    expect(JSON.parse(String(init?.body)).operation_id).toBe("shared-operation-id");
+    expect(generateUUID).toHaveBeenCalledOnce();
+  });
+
   it.each(["retry", "relink"] as const)(
     "submits the %s action without resending the message",
     async (action) => {

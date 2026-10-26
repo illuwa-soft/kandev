@@ -154,7 +154,7 @@ export function EntityReferenceChip({ reference, taskId }: EntityReferenceChipPr
       {canRetry ? (
         <button
           type="button"
-          className="min-h-7 rounded px-2 text-xs font-medium text-primary underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-md:min-h-11"
+          className="min-h-7 cursor-pointer rounded px-2 text-xs font-medium text-primary underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-md:min-h-11 [@media(pointer:coarse)]:min-h-11"
           aria-label={t("task:referenceRegistrationRetry")}
           data-testid="entity-reference-registration-retry"
           disabled={workingAction !== null}
@@ -168,7 +168,7 @@ export function EntityReferenceChip({ reference, taskId }: EntityReferenceChipPr
       {canRelink ? (
         <button
           type="button"
-          className="min-h-7 rounded px-2 text-xs font-medium text-primary underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-md:min-h-11"
+          className="min-h-7 cursor-pointer rounded px-2 text-xs font-medium text-primary underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-md:min-h-11 [@media(pointer:coarse)]:min-h-11"
           aria-label={t("task:referenceRegistrationLinkAgain")}
           data-testid="entity-reference-registration-link-again"
           disabled={workingAction !== null}

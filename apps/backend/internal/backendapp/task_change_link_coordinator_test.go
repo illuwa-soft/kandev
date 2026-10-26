@@ -31,10 +31,43 @@ import (
 )
 
 type fakeGitLabChangeLinks struct {
-	mrs       []*gitlab.TaskMR
-	linkedURL string
-	unlinkErr map[string]error
-	unlinked  []string
+	mrs        []*gitlab.TaskMR
+	linkedURL  string
+	linkNumber int
+	unlinkErr  map[string]error
+	unlinked   []string
+}
+
+type fakeGitLabObservationChangeLinks struct {
+	*fakeGitLabChangeLinks
+}
+
+func (f *fakeGitLabObservationChangeLinks) RegisterExistingMRByURL(
+	ctx context.Context, workspaceID, taskID, repositoryID, mrURL string, _ bool, _ string,
+) (*gitlab.TaskMR, error) {
+	return f.AssociateExistingMRByURL(ctx, workspaceID, taskID, repositoryID, mrURL)
+}
+
+type fakeTransactionalGitHubObservation struct {
+	*fakeGitHubChangeLinks
+	registration *github.TaskPR
+	operationID  string
+}
+
+func (f *fakeTransactionalGitHubObservation) RegisterExistingPRByURLForWorkspaceWithCommit(
+	ctx context.Context, _, _, _, _, _ string, restore bool, operationID string, commit github.TaskPRObservationCommitter,
+) (*github.TaskPR, error) {
+	f.operationID = operationID
+	registered, _, err := commit(ctx, f.registration, restore, 2)
+	return registered, err
+}
+
+func (f *fakeTransactionalGitHubObservation) RegisterTaskPRObservationTx(
+	_ context.Context, _ *sqlx.Tx, registration *github.TaskPR, _ bool, expectedRevision int64,
+) (*github.TaskPR, bool, error) {
+	registration.ID = "association-after-restore"
+	registration.AssociationRevision = expectedRevision + 1
+	return registration, true, nil
 }
 
 type fakeGitHubChangeLinks struct {
@@ -105,8 +138,11 @@ func (f *fakeGitLabChangeLinks) AssociateExistingMRByURL(
 	}
 	mr := &gitlab.TaskMR{
 		ID: "linked-new", TaskID: taskID, RepositoryID: repositoryID,
-		Host: "https://gitlab.example.test", ProjectPath: "group/project", MRIID: 42,
+		Host: "https://gitlab.example.test", ProjectPath: "group/project", MRIID: f.linkNumber,
 		MRURL: mrURL, State: "open",
+	}
+	if mr.MRIID == 0 {
+		mr.MRIID = 42
 	}
 	f.mrs = append(f.mrs, mr)
 	return mr, nil
@@ -347,6 +383,23 @@ func TestTaskChangeCoordinatorUnlinkAbsentIsIdempotent(t *testing.T) {
 	}
 }
 
+func TestTaskChangeCoordinatorUnlinksByURLWithoutExplicitIdentity(t *testing.T) {
+	taskSvc, repos := newTaskChangeCoordinatorHarness(t)
+	seedTaskChangeCoordinatorTask(t, repos, "ws-1", "task-1", "repo-1", "https://gitlab.example.test", "group", "project")
+	links := &fakeGitLabChangeLinks{mrs: []*gitlab.TaskMR{{
+		ID: "current", TaskID: "task-1", RepositoryID: "repo-1", Host: "https://gitlab.example.test",
+		ProjectPath: "group/project", MRIID: 42,
+	}}}
+	coordinator := taskChangeLinkCoordinator{tasks: taskSvc, gitlab: links}
+
+	result, err := coordinator.UnlinkTaskChange(context.Background(), mcphandlers.TaskChangeLinkRequest{
+		TaskID: "task-1", URL: "https://gitlab.example.test/group/project/-/merge_requests/42",
+	})
+	require.NoError(t, err)
+	assert.Empty(t, result)
+	assert.Equal(t, []string{"current"}, links.unlinked)
+}
+
 func TestTaskChangeCoordinatorReplaceSameIdentityIsANoOp(t *testing.T) {
 	taskSvc, repos := newTaskChangeCoordinatorHarness(t)
 	seedTaskChangeCoordinatorTask(t, repos, "ws-1", "task-1", "repo-1", "https://gitlab.example.test", "group", "project")
@@ -360,6 +413,62 @@ func TestTaskChangeCoordinatorReplaceSameIdentityIsANoOp(t *testing.T) {
 	}
 	if len(links.unlinked) != 0 || links.linkedURL != "" {
 		t.Fatalf("same-identity replace mutated provider: unlinked=%#v linked=%q", links.unlinked, links.linkedURL)
+	}
+}
+
+func TestTaskChangeCoordinatorReplacesByURLWithoutExplicitIdentity(t *testing.T) {
+	taskSvc, repos := newTaskChangeCoordinatorHarness(t)
+	seedTaskChangeCoordinatorTask(t, repos, "ws-1", "task-1", "repo-1", "https://gitlab.example.test", "group", "project")
+	links := &fakeGitLabChangeLinks{linkNumber: 43, mrs: []*gitlab.TaskMR{{
+		ID: "old", TaskID: "task-1", RepositoryID: "repo-1", Host: "https://gitlab.example.test",
+		ProjectPath: "group/project", MRIID: 42,
+	}}}
+	coordinator := taskChangeLinkCoordinator{tasks: taskSvc, gitlab: &fakeGitLabObservationChangeLinks{fakeGitLabChangeLinks: links}}
+	old := mcphandlers.TaskChangeLink{Provider: "gitlab", RepositoryID: "repo-1", Number: 42}
+
+	result, err := coordinator.ReplaceTaskChange(context.Background(), mcphandlers.TaskChangeLinkRequest{
+		TaskID: "task-1", URL: "https://gitlab.example.test/group/project/-/merge_requests/43", Old: &old,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, []mcphandlers.TaskChangeLink{{Provider: "gitlab", RepositoryID: "repo-1", Number: 43}}, result)
+	assert.Equal(t, []string{"old"}, links.unlinked)
+}
+
+func TestTaskChangeCoordinatorRestoreKeepsOriginAndUsesCurrentOperationReceipt(t *testing.T) {
+	taskSvc, repos, db := newTaskChangeCoordinatorHarnessWithDB(t)
+	seedTaskChangeCoordinatorTask(t, repos, "ws-restore", "task-restore", "repo-restore", "https://github.com", "acme", "api")
+	if _, err := db.Exec(`UPDATE repositories SET provider_repo_id = 'provider-repo-restore' WHERE id = ?`, "repo-restore"); err != nil {
+		t.Fatalf("set provider repository identity: %v", err)
+	}
+	registration := &github.TaskPR{
+		TaskID: "task-restore", WorkspaceID: "ws-restore", RepositoryID: "repo-restore", Owner: "acme", Repo: "api",
+		PRNumber: 17, PRURL: "https://github.com/acme/api/pull/17", ProviderHost: "https://github.com",
+		ConnectionScope: "builtin:ws-restore", ProviderRepositoryID: "provider-repo-restore",
+		RepositoryPath: "acme/api", FirstOriginKind: "selected_mention", FirstOriginID: "origin-before-unlink",
+	}
+	provider := &fakeTransactionalGitHubObservation{
+		fakeGitHubChangeLinks: &fakeGitHubChangeLinks{}, registration: registration,
+	}
+	coordinator := taskChangeLinkCoordinator{tasks: taskSvc, db: db, registrationIntents: repos, github: provider}
+	ctx := authn.WithIdentity(context.Background(), authn.Identity{UserID: "user-1", Role: authn.RoleMember})
+	restore := true
+	req := mcphandlers.TaskChangeLinkRequest{
+		TaskID: "task-restore", AssociationMode: "observation", OperationID: "operation-after-unlink",
+		RestoreDetached: &restore,
+		Link:            mcphandlers.TaskChangeLink{Provider: "github", RepositoryID: "repo-restore", Number: 17},
+	}
+	if err := coordinator.link(ctx, req); err != nil {
+		t.Fatalf("restore association: %v", err)
+	}
+
+	var operationID, originID string
+	if err := db.QueryRowContext(ctx, db.Rebind(`
+		SELECT operation_id, origin_id FROM task_change_registration_intents WHERE task_id = ?`), "task-restore").Scan(&operationID, &originID); err != nil {
+		t.Fatalf("read restored registration intent: %v", err)
+	}
+	if provider.operationID != req.OperationID || operationID != req.OperationID || originID != "origin-before-unlink" {
+		t.Fatalf("restored registration identity = provider operation %q, stored operation %q, origin %q",
+			provider.operationID, operationID, originID)
 	}
 }
 

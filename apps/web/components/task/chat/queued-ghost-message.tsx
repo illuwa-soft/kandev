@@ -487,6 +487,7 @@ function useQueuedGhostEditStarter({
       editTokenRef.current = editToken;
       const savedDraft =
         readQueuedGhostEditDraft(entry.session_id, entry.id) ?? savedDraftRef.current;
+      savedDraftRef.current = null;
       setValue(savedDraft?.content ?? entry.content);
       setReferences(savedDraft?.references ?? [...entityReferences]);
       setEditing(true);
@@ -628,6 +629,7 @@ export const QueuedGhostMessage = forwardRef<QueuedGhostMessageHandle, QueuedGho
       },
     });
     const handleCancelWithDraftClear = useCallback(async () => {
+      clearQueuedGhostEditDraft(entry.session_id, entry.id);
       try {
         await handleCancel();
       } finally {

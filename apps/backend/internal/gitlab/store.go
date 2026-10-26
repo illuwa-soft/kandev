@@ -276,10 +276,7 @@ func (s *Store) migrateTaskMRCanonicalKey() error {
 	if dialect.IsPostgres(s.db.DriverName()) {
 		return s.migrateTaskMRCanonicalKeyPostgres()
 	}
-	if err := s.rebuildIfHasLegacyConstraint(
-		"gitlab_task_mrs",
-		"UNIQUE(task_id, repository_id, project_path, mr_iid)",
-		`CREATE TABLE gitlab_task_mrs_new (
+	createNew := dialect.MustRenderSchema(s.db.DriverName(), `CREATE TABLE gitlab_task_mrs_new (
 			id TEXT PRIMARY KEY, task_id TEXT NOT NULL, repository_id TEXT NOT NULL DEFAULT '',
 			host TEXT NOT NULL DEFAULT '', project_path TEXT NOT NULL, mr_iid INTEGER NOT NULL,
 			mr_url TEXT NOT NULL, mr_title TEXT NOT NULL, head_branch TEXT NOT NULL, head_sha TEXT NOT NULL DEFAULT '',
@@ -289,13 +286,17 @@ func (s *Store) migrateTaskMRCanonicalKey() error {
 		required_approvals INTEGER DEFAULT 0, pipeline_jobs_total INTEGER DEFAULT 0, pipeline_jobs_pass INTEGER DEFAULT 0,
 		detailed_merge_status TEXT NOT NULL DEFAULT '', reviewer_count INTEGER NOT NULL DEFAULT 0,
 			unapproved_reviewers INTEGER NOT NULL DEFAULT 0, unresolved_discussions INTEGER NOT NULL DEFAULT 0,
-			created_at DATETIME NOT NULL, merged_at DATETIME, closed_at DATETIME, last_synced_at DATETIME,
-			updated_at DATETIME NOT NULL, provider_repository_id TEXT NOT NULL DEFAULT '',
+			created_at {{timestamp}} NOT NULL, merged_at {{timestamp}}, closed_at {{timestamp}}, last_synced_at {{timestamp}},
+			updated_at {{timestamp}} NOT NULL, provider_repository_id TEXT NOT NULL DEFAULT '',
 			connection_scope TEXT NOT NULL DEFAULT '', repository_path TEXT NOT NULL DEFAULT '', source TEXT NOT NULL DEFAULT '',
 			comparison_policy TEXT NOT NULL DEFAULT 'legacy', association_revision BIGINT NOT NULL DEFAULT 1,
 			first_origin_kind TEXT NOT NULL DEFAULT '', first_origin_id TEXT NOT NULL DEFAULT '',
-			first_origin_revision TEXT NOT NULL DEFAULT '', detached_at DATETIME
-		)`,
+			first_origin_revision TEXT NOT NULL DEFAULT '', detached_at {{timestamp}}
+		)`)
+	if err := s.rebuildIfHasLegacyConstraint(
+		"gitlab_task_mrs",
+		"UNIQUE(task_id, repository_id, project_path, mr_iid)",
+		createNew,
 		`INSERT INTO gitlab_task_mrs_new (
 			id, task_id, repository_id, host, project_path, mr_iid, mr_url, mr_title, head_branch, head_sha,
 			base_branch, base_sha, author_username, state, approval_state, pipeline_state, merge_status, draft,
@@ -851,7 +852,7 @@ func (s *Store) UpsertTaskMR(ctx context.Context, tm *TaskMR) error {
 			merged_at = excluded.merged_at, closed_at = excluded.closed_at,
 			last_synced_at = excluded.last_synced_at, updated_at = excluded.updated_at
 		WHERE gitlab_task_mrs.detached_at IS NULL
-		RETURNING id, created_at, updated_at`, tm)
+		RETURNING id, created_at, updated_at, association_revision`, tm)
 	if err != nil {
 		return err
 	}
@@ -866,7 +867,7 @@ func (s *Store) UpsertTaskMR(ctx context.Context, tm *TaskMR) error {
 		}
 		return errors.New("upsert task MR returned no row")
 	}
-	if err := rows.Scan(&tm.ID, &tm.CreatedAt, &tm.UpdatedAt); err != nil {
+	if err := rows.Scan(&tm.ID, &tm.CreatedAt, &tm.UpdatedAt, &tm.AssociationRevision); err != nil {
 		return err
 	}
 	if err := rows.Close(); err != nil {

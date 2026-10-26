@@ -199,12 +199,52 @@ func (s *Service) AssociateExistingMRByURL(
 		return nil, ErrTaskMRNotFound
 	}
 	association := taskMRFromStatus(taskID, repositoryID, client.Host(), projectPath, status)
-	if err := store.UpsertTaskMR(ctx, association); err != nil {
+	association, err = s.upsertOrRestoreTaskMR(ctx, store, association)
+	if err != nil {
 		return nil, fmt.Errorf("upsert task MR: %w", err)
 	}
 	s.reconcileComparisonTarget(ctx, taskID, client.Host(), status.MR)
 	s.publishTaskMRUpdated(ctx, workspaceID, association)
 	return association, nil
+}
+
+func (s *Service) upsertOrRestoreTaskMR(ctx context.Context, store *Store, registration *TaskMR) (*TaskMR, error) {
+	existing, err := store.GetTaskMRIncludingDetached(
+		ctx, registration.TaskID, registration.RepositoryID, registration.ProjectPath, registration.MRIID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if existing != nil && existing.DetachedAt != nil {
+		return s.restoreManuallyLinkedTaskMR(ctx, store, registration, existing)
+	}
+	if err := store.UpsertTaskMR(ctx, registration); err == nil {
+		return registration, nil
+	} else if !errors.Is(err, ErrTaskMRDetached) {
+		return nil, err
+	}
+	// Detach may race with the first read. Re-read the detached revision and
+	// restore only if the same canonical association remains detached.
+	existing, err = store.GetTaskMRIncludingDetached(
+		ctx, registration.TaskID, registration.RepositoryID, registration.ProjectPath, registration.MRIID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if existing == nil || existing.DetachedAt == nil {
+		return nil, ErrTaskMRRegistrationRevisionChanged
+	}
+	return s.restoreManuallyLinkedTaskMR(ctx, store, registration, existing)
+}
+
+func (s *Service) restoreManuallyLinkedTaskMR(
+	ctx context.Context, store *Store, registration, existing *TaskMR,
+) (*TaskMR, error) {
+	registration.ID = existing.ID
+	registration.ProviderRepositoryID = existing.ProviderRepositoryID
+	registration.ConnectionScope = existing.ConnectionScope
+	registration.RepositoryPath = existing.RepositoryPath
+	return store.RestoreDetachedTaskMR(ctx, registration, existing.AssociationRevision)
 }
 
 // AssociateExistingMRByURLForSession wraps AssociateExistingMRByURL for

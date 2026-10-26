@@ -36,7 +36,15 @@ function entityReferenceFromAttrs(attrs: Record<string, unknown> | undefined) {
   if (!attrs) return null;
   const candidate = { ...attrs };
   delete candidate.registration_enabled;
-  if (candidate.key === null) candidate.key = undefined;
+  for (const field of [
+    "key",
+    "selection_id",
+    "association_mode",
+    "registration_status",
+    "registration_error_code",
+  ]) {
+    if (candidate[field] === null) delete candidate[field];
+  }
   return isEntityReference(candidate) ? candidate : null;
 }
 

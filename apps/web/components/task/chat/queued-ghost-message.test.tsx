@@ -12,6 +12,7 @@ import {
 import { entityReferenceMarkdown } from "@/lib/entity-references/message-references";
 import type { EntityReference } from "@/lib/types/entity-reference";
 import type { QueuedMessage } from "@/lib/state/slices/session/types";
+import { writeQueuedGhostEditDraft } from "./queued-ghost-edit-draft";
 
 afterEach(() => {
   cleanup();
@@ -621,6 +622,32 @@ describe("QueuedGhostMessage entity references", () => {
 });
 
 describe("QueuedGhostMessage reference relinking", () => {
+  it("does not restore a consumed saved draft after canceling a later edit", async () => {
+    writeQueuedGhostEditDraft("sess-1", "q-1", { content: "recovered draft", references: [] });
+    renderWithProviders(
+      <QueuedGhostMessage
+        entry={entry({ content: "current server content" })}
+        canEdit
+        onSave={async () => {}}
+        onRemove={() => {}}
+      />,
+    );
+
+    await waitFor(() => expect(screen.getByTestId(QUEUE_EDIT_TEXTAREA_TESTID)).toBeTruthy());
+    expect((screen.getByTestId(QUEUE_EDIT_TEXTAREA_TESTID) as HTMLTextAreaElement).value).toBe(
+      "recovered draft",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    fireEvent.click(screen.getByTitle(EDIT_TITLE));
+    await waitFor(() => expect(screen.getByTestId(QUEUE_EDIT_TEXTAREA_TESTID)).toBeTruthy());
+    expect((screen.getByTestId(QUEUE_EDIT_TEXTAREA_TESTID) as HTMLTextAreaElement).value).toBe(
+      "current server content",
+    );
+  });
+});
+
+describe("QueuedGhostMessage selected reference identity", () => {
   it("saves a fresh relink selection when the edited Markdown text is unchanged", async () => {
     const reference = pullRequestReference({
       selection_id: "selection-unlinked",
@@ -679,7 +706,9 @@ describe("QueuedGhostMessage reference relinking", () => {
     expect(savedReferences[0].association_mode).toBe("link_on_send");
     expect(savedReferences[0].registration_status).toBeUndefined();
   });
+});
 
+describe("QueuedGhostMessage reference selection cancellation", () => {
   it("discards an unsaved reference reselection on Cancel", async () => {
     const reference = pullRequestReference({
       selection_id: "selection-unlinked",

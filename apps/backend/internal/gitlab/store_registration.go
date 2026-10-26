@@ -35,6 +35,64 @@ func (s *Store) RegisterTaskMRObservation(
 	return registered, changed, nil
 }
 
+// RestoreDetachedTaskMR reactivates a manually linked detached association
+// while preserving its source, origin, and automation metadata.
+func (s *Store) RestoreDetachedTaskMR(
+	ctx context.Context, registration *TaskMR, expectedRevision int64,
+) (*TaskMR, error) {
+	if err := validateDetachedTaskMRRestoreRequest(registration, expectedRevision); err != nil {
+		return nil, err
+	}
+	tx, err := s.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = tx.Rollback() }()
+	existing, err := getTaskMRByIDTx(ctx, tx, registration.ID)
+	if err != nil {
+		return nil, err
+	}
+	if err := validateDetachedTaskMRRestoreTarget(existing, registration, expectedRevision); err != nil {
+		return nil, err
+	}
+	if err := restoreTaskMRObservationRowTx(ctx, tx, registration, existing.ID, expectedRevision); err != nil {
+		return nil, err
+	}
+	restored, err := getTaskMRByIDTx(ctx, tx, existing.ID)
+	if err != nil {
+		return nil, err
+	}
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+	return restored, nil
+}
+
+func validateDetachedTaskMRRestoreRequest(registration *TaskMR, expectedRevision int64) error {
+	if registration == nil || registration.ID == "" || expectedRevision <= 0 {
+		return ErrTaskMRRegistrationRevisionChanged
+	}
+	return nil
+}
+
+func validateDetachedTaskMRRestoreTarget(
+	existing, registration *TaskMR, expectedRevision int64,
+) error {
+	if existing == nil || existing.DetachedAt == nil || existing.AssociationRevision != expectedRevision {
+		return ErrTaskMRRegistrationRevisionChanged
+	}
+	if !sameDetachedTaskMRIdentity(existing, registration) {
+		return ErrTaskMRRepositoryMismatch
+	}
+	return nil
+}
+
+func sameDetachedTaskMRIdentity(existing, registration *TaskMR) bool {
+	return existing.TaskID == registration.TaskID && existing.RepositoryID == registration.RepositoryID &&
+		existing.ProjectPath == registration.ProjectPath && existing.MRIID == registration.MRIID &&
+		existing.Host != "" && sameConfiguredOrigin(existing.Host, registration.Host)
+}
+
 // RegisterTaskMRObservationTx commits through a caller-owned transaction so a
 // durable registration intent can share the association's revision fence.
 func (s *Store) RegisterTaskMRObservationTx(
@@ -120,7 +178,7 @@ func restoreTaskMRObservationRowTx(
 	existingID string,
 	expectedRevision int64,
 ) error {
-	_, err := tx.ExecContext(ctx, tx.Rebind(`
+	result, err := tx.ExecContext(ctx, tx.Rebind(`
 		UPDATE gitlab_task_mrs SET detached_at = NULL, association_revision = association_revision + 1,
 			repository_id = ?, host = ?, project_path = ?, repository_path = ?, mr_url = ?, mr_title = ?,
 			head_branch = ?, head_sha = ?, base_branch = ?, base_sha = ?, author_username = ?, state = ?,
@@ -139,6 +197,13 @@ func restoreTaskMRObservationRowTx(
 		registration.LastSyncedAt, time.Now().UTC(), existingID, expectedRevision)
 	if err != nil {
 		return fmt.Errorf("restore detached GitLab association: %w", err)
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("read restored GitLab association result: %w", err)
+	}
+	if rowsAffected != 1 {
+		return ErrTaskMRRegistrationRevisionChanged
 	}
 	return nil
 }
