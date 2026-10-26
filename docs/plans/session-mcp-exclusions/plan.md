@@ -604,3 +604,69 @@ Only this integration record was added after checks. Normal hook receipt and
 final local/remote/PR SHA are recorded in the saved task plan and coordinator
 handoff. PR #4761 remains draft on assignment. No CI/review handling, merge,
 sibling edits, new agents, or runtime changes are part of this update.
+
+## Management squash integration: 2026-10-26
+
+Verified assignment remote `7604e81b0446062a5600f07857062380d0a1c587` contains
+actual management squash `e5c38184cf9c191075dc88c1ffad28c636858bf5` on main.
+Management PR #4759 is merged; assignment PR #4760 now targets main. Exclusions
+PR #4761 continues to target the assignment branch and remains draft.
+
+Preserved the clean published exclusions tip
+`77a3e83a6445c8a53066fdf8a7c3d0caac4ccbee` as
+`backup/exclusions-pre-management-squash-20261026`. Replayed only own six commits
+after OLD assignment `f3be6a5186f43dcce4487371c7a493be6c9ec280` onto the new
+assignment head. The resulting range contains only these exclusion-owned commits;
+no management or assignment commit was replayed:
+
+- `8f67dd5a3f833fef7c6e3c78bac22d0226a62f6e` ->
+  `8b537c513b2480269b61d3ea8edeb0ca96ce5fe6`.
+- `f463e7ae99f7c995d0d80a51ab0a07c8c3cf16dc` ->
+  `586a1a145f99581970881c66487e453ea604fa40`.
+- `8a107656e3e1e01534b1b51467075aae32850e83` ->
+  `a3e92b0de43fdb86a3c446246a9cc7b808a7df14`.
+- `2db5889451b5b5afd781b531277ba77d8f30138e` ->
+  `4e212bcc3e11e4ebabe0fe01e42c38641a947d10`.
+- `2925ed62fd7e7eabd68d0bebe986cde1ac34cdfe` ->
+  `b54f3d59cac47b2917e4f599e48305f93d0ba6d5`.
+- `77a3e83a6445c8a53066fdf8a7c3d0caac4ccbee` ->
+  `4903e6115223b64ffad5b87c82e93d7a0a19a051`.
+
+Conflicts were limited to appended task-locale keys in eight catalogs. Preserved
+both the new main question-image keys and the session-exclusion reason. Range-diff
+shows only the changed neighboring locale context in the feature patch; the other
+five replayed patches are identical. The shared settings draft hook and its
+suspended-render test are byte-identical to assignment, including the layout-effect
+ref publication and expected_definition_ids assertion. Inline profile hint readiness
+and explicit session Customize behavior remain intact.
+
+The MCP resolver/store/handler code and session exclusion UI are byte-identical
+to the prior publication. Existing PostgreSQL concurrency, lifecycle, SQLguard,
+store-conformance and session screenshots remain applicable; the main/base update
+does not change the screenshot's user-visible exclusion surface. No new product
+implementation was needed.
+
+Affected checks completed on the integrated source:
+
+- `go test -trimpath -race ./internal/agent/mcpconfig ./internal/agent/settings/store ./internal/agent/settings/handlers ./internal/backendapp -run 'MCP|Selection|Effective' -count=1`: passed, including application wiring on the merged main baseline.
+- Eleven focused frontend suites passed, 91 tests. This includes selection
+  editor/context, settings draft, assignment focus, session exclusion rendering,
+  pending comparison, API, and task-route admission tests.
+- Full web typecheck and i18n completeness passed. All eight merged task catalogs
+  retained the upstream question-image keys and exclusion reason.
+- Catalog validation (403 decisions, 1744 specifications), full spec lint, and
+  whitespace checks passed.
+- Fresh managed desktop build and 21 focused Chromium E2E cases passed with
+  zero retries; log `/tmp/kandev-run.e2e.92U49Np8.log`.
+- The same build passed 17 mobile Chrome E2E cases with zero retries; log
+  `/tmp/kandev-run.e2e.FEoGoO2J.log`. Both runs covered exclusion/restore,
+  committed-versus-pending changes, task origins, assignment handoff, and error
+  recovery. Desktop additionally covered narrow fine-pointer and coarse-pointer
+  tablet paths. Runs were sequential, with one worker each.
+
+Only this integration record changed after validation. Normal commit-hook receipt
+and the final local/remote/PR SHA are recorded in the saved task plan and coordinator
+handoff. Publish with the captured exact exclusions remote-OID lease. PR #4761
+remains draft on assignment; the next replay boundary is
+`7604e81b0446062a5600f07857062380d0a1c587`. No CI/review handling, merge, sibling
+edits, new agents, or main runtime changes are part of this update.
