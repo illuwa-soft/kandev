@@ -147,4 +147,6 @@ The following targeted checks passed:
 - The production Vite build passed. Chromium E2E passed 9/9 and mobile Chrome passed 4/4 against the rebuilt bundle, including queued reselection, unchanged prompt text, and edit recovery through reload and breakpoint changes.
 - Public documentation, specification catalog/lint, and whitespace checks passed; full implementation evidence is recorded in [validation evidence](validation-evidence.md).
 
+PR review fixup also passed the post-rebase checks recorded in [validation evidence](validation-evidence.md). The branch rebased onto current `main`. The managed desktop and mobile queue session-switch tests both pass with restored edit drafts. The PostgreSQL DSN was unavailable for this pass; the earlier disposable PostgreSQL 16 evidence remains recorded above.
+
 Task 04 and shared requirement/design promotion remain pending.

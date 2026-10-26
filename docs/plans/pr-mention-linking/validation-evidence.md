@@ -128,3 +128,19 @@ Tasks 01 through 03 are complete. Task 04 and promotion of the shared requiremen
 | Documentation and whitespace | Specification catalog/lint, public-doc tests/validation, and `git diff --check` passed. |
 
 The queue integration tests run the same admission and edit transaction assertions in SQLite and PostgreSQL. They cover replay without duplicate intents, rollback after an injected producer failure, unchanged Save, fresh reselection, accepted removal, fold and dispatch propagation, clear, Send now, and registration status projection. Browser tests confirm that a reselection's identity and prompt survive reload and desktop/phone breakpoint changes, and only Save creates the association. These are targeted work-order checks; Task 04 conformance and final package-wide checks remain open.
+
+### PR review fixup evidence (2026-10-26)
+
+The PR branch was rebased onto `main` at `6a1a2ae10003c6bccc754ab144c6035ac38158d1`. The review fixes preserve Task 03 scope. Task 04 and shared requirement/design promotion remain pending.
+
+| Finding | Fix and evidence |
+| --- | --- |
+| Processor restart could reuse a closed worker signal. | Each worker generation owns its completion channel. Stop waits for that worker before another start. Backend processor restart tests pass. |
+| URL-only unlink and replacement could ignore or contradict asserted identity. | Both operations resolve the URL and compare every supplied provider, repository, and number field before mutation. Backend coordinator tests pass. |
+| Successful intents could miss the association revision or reuse the first-origin ID as an operation receipt. | Already-active links persist their current revision. The original operation ID remains separate from the association's first-origin metadata. Backend registration tests pass. |
+| GitLab manual relink could fail on a detached row, report revision zero, or race with detach during sync. | Manual relink restores the row with an expected revision and keeps its metadata. Upserts return the committed revision, and sync handles a missing row. GitLab service and store tests pass. |
+| Draft restoration and reference parsing could retain stale or invalid state. | The editor consumes saved drafts once, clears them on Cancel, omits nullable TipTap attributes, and uses the shared UUID helper. Focused frontend tests pass. |
+| Reference controls could have weak pointer or touch affordances. | Queue and reference actions use pointer cursors and coarse-pointer targets of at least 44 px. Focused component tests and frontend lint pass. |
+| A queue session-switch E2E counted an unsaved edit as a normal row. | The editor resumes the draft after task navigation. The desktop and mobile tests now assert the restored value and save it. Both managed E2Es pass against the fresh production build. |
+
+Post-rebase validation passed: `make build` and `make lint` in `apps/backend`; focused Go registration tests across backendapp, entityrefs, GitHub, GitLab, MCP, messagequeue, task handlers, and SQLite; 310 frontend tests across 16 files; web typecheck, lint, localization checks, and new-code ratchet; specification and public-doc validators; and desktop Chromium and mobile Chrome queue-switch E2Es. The GitLab package also passed its full unit suite. The PostgreSQL test DSN was not available in this pass. Earlier Task 03 evidence records successful race-enabled tests against disposable PostgreSQL 16. The pushed PR's PostgreSQL matrix remains the current post-rebase check.
