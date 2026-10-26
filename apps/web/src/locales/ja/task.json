@@ -2946,5 +2946,8 @@
   "taskCreationBusy": "タスクの作成状態を確認しています。",
   "taskCreationCheckStatus": "状態を確認",
   "taskCreationRetrySubmission": "送信を再試行",
-  "taskCreationOpenTask": "タスクを開く"
+  "taskCreationOpenTask": "タスクを開く",
+  "referenceLinkOnSave": "保存時にリンク",
+  "referenceLinkAgainOnSave": "保存時に再リンク",
+  "referenceRetainedLinksDisclosure": "追加済みのリンクは、解除するまで維持されます。"
 }

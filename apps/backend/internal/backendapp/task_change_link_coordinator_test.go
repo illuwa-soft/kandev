@@ -43,6 +43,9 @@ type fakeGitHubChangeLinks struct {
 	linkedURL         string
 	linkedWorkspaceID string
 	linkedUserID      string
+	registered        bool
+	restoreDetached   bool
+	operationID       string
 	unlinked          []string
 }
 
@@ -57,6 +60,15 @@ func (f *fakeGitHubChangeLinks) AssociateExistingPRByURLForWorkspace(_ context.C
 	pr := &github.TaskPR{ID: "linked-github", TaskID: taskID, RepositoryID: repositoryID, PRNumber: 42, PRURL: prURL}
 	f.prs = append(f.prs, pr)
 	return pr, nil
+}
+
+func (f *fakeGitHubChangeLinks) RegisterExistingPRByURLForWorkspace(
+	ctx context.Context, workspaceID, userID, taskID, repositoryID, prURL string, restoreDetached bool, operationID string,
+) (*github.TaskPR, error) {
+	f.registered = true
+	f.restoreDetached = restoreDetached
+	f.operationID = operationID
+	return f.AssociateExistingPRByURLForWorkspace(ctx, workspaceID, userID, taskID, repositoryID, prURL)
 }
 
 func (f *fakeGitHubChangeLinks) DetachTaskPR(_ context.Context, _ string, associationID string) (*github.TaskPR, error) {
@@ -126,6 +138,11 @@ func (f *fakeGitLabChangeLinks) UnlinkTaskMR(_ context.Context, _ string, associ
 }
 
 func newTaskChangeCoordinatorHarness(t *testing.T) (*taskservice.Service, *sqliterepo.Repository) {
+	taskSvc, repos, _ := newTaskChangeCoordinatorHarnessWithDB(t)
+	return taskSvc, repos
+}
+
+func newTaskChangeCoordinatorHarnessWithDB(t *testing.T) (*taskservice.Service, *sqliterepo.Repository, *sqlx.DB) {
 	t.Helper()
 	dbConn, err := db.OpenSQLite(filepath.Join(t.TempDir(), "task-change-links.db"))
 	if err != nil {
@@ -156,7 +173,7 @@ func newTaskChangeCoordinatorHarness(t *testing.T) (*taskservice.Service, *sqlit
 		Environments: repos,
 		Reviews:      repos,
 	}, bus.NewMemoryEventBus(log), log, taskservice.RepositoryDiscoveryConfig{})
-	return taskSvc, repos
+	return taskSvc, repos, database
 }
 
 func seedTaskChangeCoordinatorTask(
@@ -248,6 +265,47 @@ func TestTaskChangeCoordinatorDispatchesGitHubLinkWithWorkspaceIdentity(t *testi
 	if len(links) != 1 || links[0].Provider != "github" {
 		t.Fatalf("links = %#v, want one GitHub link", links)
 	}
+}
+
+func TestTaskChangeCoordinatorResolvesGitHubURLAgainstAttachedRepository(t *testing.T) {
+	taskSvc, repos := newTaskChangeCoordinatorHarness(t)
+	seedTaskChangeCoordinatorTask(t, repos, "ws-1", "task-1", "repo-1", "https://github.com", "acme", "api")
+	githubLinks := &fakeGitHubChangeLinks{}
+	coordinator := taskChangeLinkCoordinator{tasks: taskSvc, github: githubLinks}
+	ctx := authn.WithIdentity(context.Background(), authn.Identity{UserID: "user-1"})
+
+	links, err := coordinator.LinkTaskChange(ctx, mcphandlers.TaskChangeLinkRequest{
+		TaskID: "task-1", URL: "https://github.com/acme/api/pull/42",
+	})
+	require.NoError(t, err)
+	assert.True(t, githubLinks.registered, "URL registration must use the observation path by default")
+	assert.False(t, githubLinks.restoreDetached, "a new registration must not restore a detached association by default")
+	assert.Equal(t, "https://github.com/acme/api/pull/42", githubLinks.linkedURL)
+	require.Len(t, links, 1)
+	assert.Equal(t, mcphandlers.TaskChangeLink{Provider: "github", RepositoryID: "repo-1", Number: 42}, links[0])
+}
+
+func TestTaskChangeCoordinatorRejectsAmbiguousGitHubURL(t *testing.T) {
+	taskSvc, repos := newTaskChangeCoordinatorHarness(t)
+	seedTaskChangeCoordinatorTask(t, repos, "ws-1", "task-1", "repo-1", "https://github.com", "acme", "api")
+	now := time.Now().UTC()
+	require.NoError(t, repos.CreateRepository(context.Background(), &models.Repository{
+		ID: "repo-2", WorkspaceID: "ws-1", Name: "api duplicate", Provider: "github", ProviderHost: "https://github.com",
+		ProviderOwner: "acme", ProviderName: "api", ProviderRepoID: "repo-two", CreatedAt: now, UpdatedAt: now,
+	}))
+	require.NoError(t, repos.CreateTaskRepository(context.Background(), &models.TaskRepository{
+		ID: "tr-task-1-repo-2", TaskID: "task-1", RepositoryID: "repo-2", CreatedAt: now, UpdatedAt: now,
+		Metadata: map[string]interface{}{},
+	}))
+	githubLinks := &fakeGitHubChangeLinks{}
+	coordinator := taskChangeLinkCoordinator{tasks: taskSvc, github: githubLinks}
+	ctx := authn.WithIdentity(context.Background(), authn.Identity{UserID: "user-1"})
+
+	_, err := coordinator.LinkTaskChange(ctx, mcphandlers.TaskChangeLinkRequest{
+		TaskID: "task-1", URL: "https://github.com/acme/api/pull/42",
+	})
+	require.ErrorContains(t, err, "more than one attached repository")
+	assert.Empty(t, githubLinks.linkedURL, "ambiguous identity must fail before provider mutation")
 }
 
 func TestTaskChangeCoordinatorDispatchesGitLabLinkAndReturnsLinkedSet(t *testing.T) {

@@ -2946,5 +2946,8 @@
   "taskCreationBusy": "正在检查任务创建状态。",
   "taskCreationCheckStatus": "检查状态",
   "taskCreationRetrySubmission": "重试提交",
-  "taskCreationOpenTask": "打开任务"
+  "taskCreationOpenTask": "打开任务",
+  "referenceLinkOnSave": "保存时关联",
+  "referenceLinkAgainOnSave": "保存时重新关联",
+  "referenceRetainedLinksDisclosure": "已添加的关联会一直保留，直到你取消关联。"
 }

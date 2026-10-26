@@ -2946,5 +2946,8 @@
   "taskCreationBusy": "Ćĥēćķĩńĝ ţàśķ ćŕēàţĩōń śţàţũś.",
   "taskCreationCheckStatus": "Ćĥēćķ śţàţũś",
   "taskCreationRetrySubmission": "Ŕēţŕŷ śũƀḿĩśśĩōń",
-  "taskCreationOpenTask": "Ōƥēń ţàśķ"
+  "taskCreationOpenTask": "Ōƥēń ţàśķ",
+  "referenceLinkOnSave": "Ŕēƒēŕēńćē ĺĩńķ ōń śàvē",
+  "referenceLinkAgainOnSave": "Ŕēƒēŕēńćē ĺĩńķ àĝàĩń ōń śàvē",
+  "referenceRetainedLinksDisclosure": "Ļĩńķś àĺŕēàďŷ àďďēď śţàŷ ĺĩńķēď ũńţĩĺ ŷōũ ũńĺĩńķ ţĥēḿ."
 }

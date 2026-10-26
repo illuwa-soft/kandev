@@ -2946,5 +2946,8 @@
   "taskCreationBusy": "작업 생성 상태를 확인하는 중입니다.",
   "taskCreationCheckStatus": "상태 확인",
   "taskCreationRetrySubmission": "제출 재시도",
-  "taskCreationOpenTask": "작업 열기"
+  "taskCreationOpenTask": "작업 열기",
+  "referenceLinkOnSave": "저장 시 연결",
+  "referenceLinkAgainOnSave": "저장 시 다시 연결",
+  "referenceRetainedLinksDisclosure": "이미 추가한 연결은 연결을 해제할 때까지 유지됩니다."
 }

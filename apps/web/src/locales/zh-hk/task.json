@@ -2946,5 +2946,8 @@
   "taskCreationBusy": "正在檢查任務建立狀態。",
   "taskCreationCheckStatus": "檢查狀態",
   "taskCreationRetrySubmission": "重試提交",
-  "taskCreationOpenTask": "開啟任務"
+  "taskCreationOpenTask": "開啟任務",
+  "referenceLinkOnSave": "儲存時關聯",
+  "referenceLinkAgainOnSave": "儲存時重新關聯",
+  "referenceRetainedLinksDisclosure": "已新增的關聯會一直保留，直到你取消關聯。"
 }

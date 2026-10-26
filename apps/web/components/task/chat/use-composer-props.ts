@@ -8,6 +8,7 @@ import type { ChatPanelState } from "./use-chat-panel-state";
 import { readAgentDeliveryRecovery } from "@/lib/session-agent-delivery-recovery";
 import { useSessionComposerRecovery } from "./session-recovery-context";
 import { useComposerPromptSuggestion } from "./use-composer-prompt-suggestion";
+import { hasPendingClarification } from "./types";
 
 // i18n-exempt: stable backend failure code, not user-facing copy.
 const DURABLE_DELIVERY_UNCERTAIN = "DURABLE_DELIVERY_UNCERTAIN";
@@ -86,6 +87,16 @@ function hasContextComments(panelState: ChatPanelState): boolean {
   );
 }
 
+function canLinkEntityReferences(panelState: ChatPanelState): boolean {
+  const queuesInput =
+    panelState.inputMode === "queue" ||
+    hasPendingClarification(
+      Boolean(panelState.pendingClarification),
+      panelState.session?.pending_action,
+    );
+  return !hasContextComments(panelState) && (!queuesInput || panelState.isQueueReady);
+}
+
 /**
  * Builds the (large) prop object for `ChatInputContainer` from panel state
  * and derived values. Kept separate so `ChatInputArea`'s render body stays
@@ -135,6 +146,7 @@ export function useComposerProps(args: ComposerPropsArgs) {
   const canQueueWhileStarting = panelState.inputMode === "queue" && panelState.isQueueReady;
   const supportsSteering = panelState.supportsSteering;
   const hasPendingContextComments = hasContextComments(panelState);
+  const entityReferenceLinkingEnabled = canLinkEntityReferences(panelState);
   return {
     ...promptSuggestion,
     onSubmit: handleSubmit,
@@ -145,6 +157,7 @@ export function useComposerProps(args: ComposerPropsArgs) {
     workspaceResolutionFailed,
     onRetryWorkspaceResolution,
     entityReferencesEnabled: true as const,
+    entityReferenceLinkingEnabled,
     taskTitle: panelState.task?.title,
     taskDescription: panelState.taskDescription ?? "",
     planModeEnabled,

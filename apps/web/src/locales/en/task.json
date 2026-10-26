@@ -2946,5 +2946,8 @@
   "taskCreationBusy": "Checking task creation status.",
   "taskCreationCheckStatus": "Check status",
   "taskCreationRetrySubmission": "Retry submission",
-  "taskCreationOpenTask": "Open task"
+  "taskCreationOpenTask": "Open task",
+  "referenceLinkOnSave": "Link on save",
+  "referenceLinkAgainOnSave": "Link again on save",
+  "referenceRetainedLinksDisclosure": "Links already added stay linked until you unlink them."
 }

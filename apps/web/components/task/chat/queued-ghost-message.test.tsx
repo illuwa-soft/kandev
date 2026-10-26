@@ -1,5 +1,5 @@
 /* eslint-disable max-lines -- queue ghost behavior is covered in one focused suite. */
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueuedGhostMessage, canMergeEntry, canMergeWithAbove } from "./queued-ghost-message";
 import { StateProvider } from "@/components/state-provider";
@@ -15,6 +15,7 @@ import type { QueuedMessage } from "@/lib/state/slices/session/types";
 
 afterEach(() => {
   cleanup();
+  window.sessionStorage.clear();
   vi.restoreAllMocks();
   triggerFileDownload.mockReset();
 });
@@ -40,8 +41,25 @@ const MERGE_TITLE = "Merge with above";
 
 const QUEUE_EDIT_TEXTAREA_TESTID = "queue-edit-textarea";
 const { triggerFileDownload } = vi.hoisted(() => ({ triggerFileDownload: vi.fn() }));
+const { useEntityReferenceSearchMock, useTaskMock } = vi.hoisted(() => ({
+  useEntityReferenceSearchMock: vi.fn(),
+  useTaskMock: vi.fn(() => ({ workspaceId: "workspace-1" })),
+}));
 
 vi.mock("@/lib/utils/file-download", () => ({ triggerFileDownload }));
+vi.mock("@/hooks/use-entity-reference-search", () => ({
+  useEntityReferenceSearch: useEntityReferenceSearchMock,
+}));
+vi.mock("@/hooks/use-task", () => ({ useTask: useTaskMock }));
+
+beforeEach(() => {
+  useEntityReferenceSearchMock.mockReturnValue({
+    groups: [],
+    isSearching: false,
+    error: null,
+    retry: vi.fn(),
+  });
+});
 
 function entry(overrides: Partial<QueuedMessage> = {}): QueuedMessage {
   return {
@@ -82,6 +100,21 @@ function issueReference(): EntityReference {
     title: "Fix login flow",
     url: "https://jira.example/browse/ENG-1",
     scope: "https://jira.example",
+  };
+}
+
+function pullRequestReference(overrides: Partial<EntityReference> = {}): EntityReference {
+  return {
+    version: 1,
+    ref: "mention:v1:github:pull_request:acme%2Frepo:42",
+    provider: "github",
+    kind: "pull_request",
+    id: "42",
+    key: "PR-42",
+    title: "Fix issue",
+    url: "https://github.com/acme/repo/pull/42",
+    scope: "acme/repo",
+    ...overrides,
   };
 }
 
@@ -520,7 +553,7 @@ describe("QueuedGhostMessage entity references", () => {
     const task = taskReference();
     const issue = issueReference();
     const edited = `${entityReferenceMarkdown(issue)} then ${entityReferenceMarkdown(task)}`;
-    const onSave = vi.fn(async () => {});
+    const onSave = vi.fn(async (_content: string, _references: EntityReference[]) => {});
 
     renderWithProviders(
       <QueuedGhostMessage
@@ -584,6 +617,113 @@ describe("QueuedGhostMessage entity references", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
     await waitFor(() => expect(onSave).toHaveBeenCalledWith("", [], attachments));
+  });
+});
+
+describe("QueuedGhostMessage reference relinking", () => {
+  it("saves a fresh relink selection when the edited Markdown text is unchanged", async () => {
+    const reference = pullRequestReference({
+      selection_id: "selection-unlinked",
+      association_mode: "link_on_send",
+      registration_status: "unlinked",
+    });
+    const content = entityReferenceMarkdown(reference);
+    const onSave = vi.fn(async (_content: string, _references: EntityReference[]) => {});
+    useEntityReferenceSearchMock.mockReturnValue({
+      groups: [
+        {
+          source: "github",
+          provider: "github",
+          kind: "pull_request",
+          display_name: "GitHub",
+          kind_label: "Pull requests",
+          status: "ok",
+          results: [pullRequestReference()],
+        },
+      ],
+      isSearching: false,
+      error: null,
+      retry: vi.fn(),
+    });
+
+    renderWithProviders(
+      <QueuedGhostMessage
+        entry={entry({ content, metadata: { entity_references: [reference] } })}
+        canEdit
+        onSave={onSave}
+        onRemove={() => {}}
+      />,
+    );
+
+    fireEvent.click(screen.getByTitle(EDIT_TITLE));
+    expect(screen.getByTestId("reference-registration-trigger").textContent).toContain(
+      "Link again on save",
+    );
+    expect(screen.getByTestId("queue-reference-registration-status").textContent).toContain(
+      "Unlinked",
+    );
+    fireEvent.click(screen.getByTestId("queue-reference-add"));
+    fireEvent.change(screen.getByTestId("queue-reference-search"), { target: { value: "PR-42" } });
+    fireEvent.click(await screen.findByRole("option", { name: /#PR-42.*Fix issue/ }));
+    expect(screen.getByTestId("queue-reference-disclosure").textContent).toBe(
+      "Links already added stay linked until you unlink them.",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => expect(onSave).toHaveBeenCalledTimes(1));
+    const [savedContent, savedReferences] = onSave.mock.calls[0] as [string, EntityReference[]];
+    expect(savedContent).toBe(content);
+    expect(savedReferences).toHaveLength(1);
+    expect(savedReferences[0].ref).toBe(reference.ref);
+    expect(savedReferences[0].selection_id).not.toBe(reference.selection_id);
+    expect(savedReferences[0].association_mode).toBe("link_on_send");
+    expect(savedReferences[0].registration_status).toBeUndefined();
+  });
+
+  it("discards an unsaved reference reselection on Cancel", async () => {
+    const reference = pullRequestReference({
+      selection_id: "selection-unlinked",
+      association_mode: "link_on_send",
+      registration_status: "unlinked",
+    });
+    const onSave = vi.fn(async () => {});
+    useEntityReferenceSearchMock.mockReturnValue({
+      groups: [
+        {
+          source: "github",
+          provider: "github",
+          kind: "pull_request",
+          display_name: "GitHub",
+          kind_label: "Pull requests",
+          status: "ok",
+          results: [pullRequestReference()],
+        },
+      ],
+      isSearching: false,
+      error: null,
+      retry: vi.fn(),
+    });
+
+    renderWithProviders(
+      <QueuedGhostMessage
+        entry={entry({
+          content: entityReferenceMarkdown(reference),
+          metadata: { entity_references: [reference] },
+        })}
+        canEdit
+        onSave={onSave}
+        onRemove={() => {}}
+      />,
+    );
+
+    fireEvent.click(screen.getByTitle(EDIT_TITLE));
+    fireEvent.click(screen.getByTestId("queue-reference-add"));
+    fireEvent.change(screen.getByTestId("queue-reference-search"), { target: { value: "PR-42" } });
+    fireEvent.click(await screen.findByRole("option", { name: /#PR-42.*Fix issue/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(onSave).not.toHaveBeenCalled();
+    expect(screen.queryByTestId("queue-reference-editor")).toBeNull();
   });
 });
 

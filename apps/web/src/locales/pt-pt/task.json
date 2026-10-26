@@ -2946,5 +2946,8 @@
   "taskCreationBusy": "A verificar o estado da criação da tarefa.",
   "taskCreationCheckStatus": "Verificar estado",
   "taskCreationRetrySubmission": "Tentar novamente o envio",
-  "taskCreationOpenTask": "Abrir tarefa"
+  "taskCreationOpenTask": "Abrir tarefa",
+  "referenceLinkOnSave": "Associar ao guardar",
+  "referenceLinkAgainOnSave": "Associar novamente ao guardar",
+  "referenceRetainedLinksDisclosure": "As ligações já adicionadas mantêm-se até as desassociar."
 }
