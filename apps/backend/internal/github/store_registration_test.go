@@ -70,6 +70,40 @@ func TestRegistrationCreatesObservationAndPreservesActiveAuthority(t *testing.T)
 	}
 }
 
+func TestReplaceTaskPRReturnsPersistedAssociationRevision(t *testing.T) {
+	store := newTestStore(t)
+	ctx := context.Background()
+	created, err := store.ReplaceTaskPR(ctx, &TaskPR{
+		ID: "task-pr-revision", TaskID: "task-pr-revision", RepositoryID: "repo-1",
+		Owner: "acme", Repo: "demo", PRNumber: 17, State: "open", CreatedAt: time.Now().UTC(),
+	}, &PRStatus{})
+	if err != nil {
+		t.Fatalf("create task PR: %v", err)
+	}
+	if created.AssociationRevision != 1 {
+		t.Fatalf("created event revision = %d, want persisted default 1", created.AssociationRevision)
+	}
+
+	refreshed, err := store.ReplaceTaskPR(ctx, &TaskPR{
+		ID: created.ID, TaskID: created.TaskID, RepositoryID: created.RepositoryID,
+		Owner: created.Owner, Repo: created.Repo, PRNumber: created.PRNumber,
+		State: "closed", CreatedAt: created.CreatedAt,
+	}, &PRStatus{})
+	if err != nil {
+		t.Fatalf("refresh task PR: %v", err)
+	}
+	if refreshed.AssociationRevision != created.AssociationRevision {
+		t.Fatalf("refreshed event revision = %d, want preserved revision %d", refreshed.AssociationRevision, created.AssociationRevision)
+	}
+	stored, err := store.GetTaskPRByID(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("read refreshed task PR: %v", err)
+	}
+	if stored.AssociationRevision != refreshed.AssociationRevision || stored.State != "closed" {
+		t.Fatalf("stored task PR = %+v, want revision %d and closed state", stored, refreshed.AssociationRevision)
+	}
+}
+
 func TestRegistrationLegacyIdentityRepair(t *testing.T) {
 	store := newTestStore(t)
 	ctx := context.Background()

@@ -3479,6 +3479,10 @@ func (s *Store) ReplaceTaskPRTx(ctx context.Context, tx *sqlx.Tx, tp *TaskPR, st
 	if err != nil {
 		return err
 	}
+	if outgoing.ID != "" {
+		tp.AssociationRevision = outgoing.AssociationRevision
+	}
+	tp.AssociationRevision = defaultTaskPRAssociationRevision(tp.AssociationRevision)
 	tp.IsDraft, tp.ChangedFiles, tp.MergedByLogin, tp.ClosedByLogin, tp.AutoMergeObservedAt =
 		resolveTaskPROutcomeFields(outgoing, status)
 	if status != nil && status.PR != nil {

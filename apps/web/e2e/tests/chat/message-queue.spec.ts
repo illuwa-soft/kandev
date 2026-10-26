@@ -328,7 +328,7 @@ test.describe("Task session queue", () => {
     );
 
     // Keep a real agent turn running while the message is queued.
-    await session.sendMessage("/sleep 5s");
+    await session.sendMessage("/sleep 30s");
     await expect(session.agentStatus()).toBeVisible({ timeout: 15_000 });
     await waitForComposerQueueMode(testPage);
 
