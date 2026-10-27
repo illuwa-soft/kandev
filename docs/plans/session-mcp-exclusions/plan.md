@@ -670,3 +670,70 @@ handoff. Publish with the captured exact exclusions remote-OID lease. PR #4761
 remains draft on assignment; the next replay boundary is
 `7604e81b0446062a5600f07857062380d0a1c587`. No CI/review handling, merge, sibling
 edits, new agents, or main runtime changes are part of this update.
+
+
+## Completed assignment review integration: 2026-10-27
+
+Verified assignment remote `74069f8b52326eb09180846b6fd3f42503017413` and
+PR #4760 OPEN/READY on main. It is not merged. Exclusions PR #4761 remains
+DRAFT on `feature/clarify-mcp-assignme-mhh`.
+
+Preserved clean own tip `fd8bb59aaa4589fc99926b66367fa48ef3b4464a` as
+`backup/exclusions-before-assignment-review-20261027`. Replayed only seven own
+commits after actual integrated assignment
+`7604e81b0446062a5600f07857062380d0a1c587` onto verified assignment `74069f8b`.
+Intervening assignment tips were never used as the old boundary.
+
+- `8b537c513b2480269b61d3ea8edeb0ca96ce5fe6` -> `ef1366051864cea0454920f9884a6e3efbc22f82`.
+- `586a1a145f99581970881c66487e453ea604fa40` -> `d923141e9422c0d3387d609ab2f0d98f680a0532`.
+- `a3e92b0de43fdb86a3c446246a9cc7b808a7df14` -> `279e2adfef0fc61fcef03b3fdbda30013aaa2392`.
+- `4e212bcc3e11e4ebabe0fe01e42c38641a947d10` -> `7eb92799d319439770e5782cf6859edba9fda4f0`.
+- `b54f3d59cac47b2917e4f599e48305f93d0ba6d5` -> `b03277b8f2d48088e6ac72be0cb70454ed8b9e0a`.
+- `4903e6115223b64ffad5b87c82e93d7a0a19a051` -> `74efb956583f9a6e84310d12854796269959015e`.
+- `fd8bb59aaa4589fc99926b66367fa48ef3b4464a` -> `609d1e8a879aa6c7efb16990b9b3ba0279aaabc5`.
+
+Conflicts were limited to the shared selection service and public recovery prose.
+Kept assignment's public `ReplaceConditional` addition-eligibility wrapper and
+internal task-session `Replace` path through private `replaceConditional`.
+Moved exclusion-context preparation into that shared private operation after
+condition/owner validation and before the atomic repository write. Internal launch
+writes still preserve omitted exclusions without acquiring HTTP runtime eligibility.
+Public writes retain eligibility and exclusion validation. Kept nil positive-ID
+presence semantics, exact committed snapshots, and postcommit notification.
+
+Inherited `a3a9f8dd8fff675dc18466a982b823c2ba16ac20`: membership comparison sorts a
+clone of saved IDs, preserving the snapshot's database order. Shared editor
+layout-effect ref publication also remains intact. Session exclusion controls and
+session hook are byte-identical to the previous publication. Existing session
+screenshots remain applicable. Public how-to recovery prose preserves upstream
+paragraph structure and explains committed-only exclusion actions and explicit
+retry after reload. Six non-feature replayed patches are identical.
+
+Validation on the integrated source:
+
+- Eleven focused frontend suites: 92 tests passed, including shared suspended-render
+  context/draft guards, session exclusion rendering, pending comparison, and APIs.
+- Disposable PostgreSQL 17.11 UTF-8 cluster under race: numeric ICU membership,
+  mixed assignment/exclusion writers, conditional repository/session writers,
+  import/deletion, resolution snapshot, and confirmed deletion all passed. Log:
+  `/tmp/exclusions-assignment-review-postgres-utf8.log`.
+  The initial disposable cluster used SQL_ASCII and rejected ICU collation creation;
+  reran with explicit UTF-8, without source changes or test skips.
+- Specification/catalog checks passed (409 decisions, 1769 specifications).
+  Public-doc validation passed for 54 pages and all 63 validator tests.
+- Changed Go lint passed with zero issues.
+- `go test -trimpath -race ./internal/agent/mcpconfig ./internal/agent/settings/store ./internal/agent/settings/handlers ./internal/backendapp -run 'MCP|Selection|Effective' -count=1`: passed, including internal launch eligibility, public assignment admission, exclusions round-trip and application wiring.
+- Full web typecheck and i18n passed: all six real locales complete, pseudo in
+  sync, and 4170 guarded source files checked.
+- Fresh managed build: 21 Chromium cases passed without retries; log
+  `/tmp/kandev-run.e2e.Fhw8i2Ih.log`. Same build: 17 mobile Chrome cases passed
+  without retries; log `/tmp/kandev-run.e2e.WAM1Et7M.log`. Runs were sequential,
+  one worker each. Coverage includes exclusions/restore, committed pending state,
+  assignment navigation, ownership/recovery, origins and coarse-pointer controls.
+
+Only this verification record changed after validation. Normal commit-hook receipt
+and final local/remote/PR SHA are recorded in the saved task plan and coordinator
+handoff. Publish using the captured remote-OID lease
+`fd8bb59aaa4589fc99926b66367fa48ef3b4464a`. The next replay boundary is
+`74069f8b52326eb09180846b6fd3f42503017413`. No CI monitoring, review handling,
+merge, sibling edits, new agents, or main-runtime changes were performed.
