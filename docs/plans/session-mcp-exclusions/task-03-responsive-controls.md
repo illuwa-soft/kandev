@@ -201,3 +201,11 @@ Post-fix validation: 66 frontend cases, full typecheck, changed-file lint and
 format, catalog/spec validation, and desktop/phone recovery journeys passed
 with retries disabled. Existing pending, saved-ID, draft and exclusion
 assertions remain intact.
+
+CodeRabbit's grouped review also found a shared desktop/phone capture identity.
+Distinct surface keys now preserve both manifest entries. The capture frames
+Reload choices explicitly; the existing seven capture-helper cases pass.
+
+Both desktop and phone capture/recovery journeys passed with retries disabled
+after the identity correction; their manifest test identities are distinct.
+Logs: `/tmp/kandev-run.e2e.EGVVcE5L.log`, `/tmp/kandev-run.e2e.jxqzP7M2.log`.

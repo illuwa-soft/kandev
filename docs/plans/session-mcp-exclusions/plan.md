@@ -853,3 +853,14 @@ catalog/spec checks and both desktop/phone recovery journeys with retries
 disabled. Browser logs: `/tmp/kandev-run.e2e.N7s3C453.log` and
 `/tmp/kandev-run.e2e.G4SYbNo5.log`. GitHub thread disposition remains pending
 publication of the fix.
+
+CodeRabbit's grouped review comment in review `5685434777` identified that both
+viewport captures shared a manifest identity. The capture helper now supplies
+separate desktop/phone keys and frames the actual Reload choices action before
+capture. Its existing seven manifest/capture tests pass, including preservation
+of separate keys from one spec. This correction changes test artifacts only;
+production retry behavior and its existing verification remain unchanged.
+
+Both desktop and phone capture/recovery journeys passed with retries disabled
+after the identity correction; their manifest test identities are distinct.
+Logs: `/tmp/kandev-run.e2e.EGVVcE5L.log`, `/tmp/kandev-run.e2e.jxqzP7M2.log`.
