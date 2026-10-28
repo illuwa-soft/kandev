@@ -2,6 +2,7 @@
 id: "01-motion-eligibility"
 title: "Retained status motion eligibility"
 status: done
+wave: 1
 plan: "plan.md"
 depends_on: []
 requirements:
@@ -81,6 +82,7 @@ validation. Capture desktop and phone states using isolated test data.
 - Initial unit GREEN: all 43 focused tests and ten existing compositor tests passed.
 - Review fix: grid setup now changes only `animation-name`, preserving the visibility controller's CSS pause. A real Chromium regression failed before the fix when the fallback mounted in a hidden document. The desktop and phone fallback cases now pass, including offscreen preference changes. All 54 motion unit tests and changed-file lint pass.
 - Review documentation fixes: requirements 004 and 006 and the visibility design are accepted; requirement 005 remains draft. The typecheck command includes the tested heap setting.
+- CI documentation coverage: the trusted evaluator reproduced a missing `wave` field. Adding `wave: 1` passes the evaluator for the exact PR file set, plus the specification catalog and lint checks.
 - Strict web lint passes. Shared lint passes with the web-only literal-string rule excluded for the existing shared Spinner label.
 - Web typecheck passes with `NODE_OPTIONS=--max-old-space-size=8192`. The default 4 GB Node heap exhausted before diagnostics.
 - Specification catalog/lint and public-doc validation pass, including 63 public-doc validator tests.
