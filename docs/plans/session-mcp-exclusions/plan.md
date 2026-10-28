@@ -892,3 +892,20 @@ review had no blockers; its session revision question was answered. The prior
 Cloudflare docs-preview failure was provider error 10500; attempt 2 passed
 without source changes. These are historical review/CI receipts, not validation
 of the rebased head. New-head CI and automated review remain pending publication.
+
+### CI assertion correction for failed MCP application
+
+E2E shard 9 reported the same stale assertion on desktop and tablet: it required
+"stays in use" for failed application. The exclusion design deliberately keeps
+only the last accepted setup for comparison after failure; it cannot claim that
+setup remains active. All eight CI error contexts showed the correct rendered
+message. The exact desktop case reproduced locally with retries disabled
+(`/tmp/kandev-run.e2e.kdA0Fx11.log`).
+
+The shared status helper now checks the comparison-only wording and rejects
+"stays in use" for failed application, while preserving the active-setup checks
+for pending-idle and deferred-restart states. No production behavior or public
+documentation changed. Both desktop/tablet cases passed
+(`/tmp/kandev-run.e2e.hrUojzhD.log`), and all three phone widths passed
+(`/tmp/kandev-run.e2e.bUbQwn2u.log`), with retries disabled. Changed-file ESLint
+and Prettier passed. New-head CI remains pending publication.
