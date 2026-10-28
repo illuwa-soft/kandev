@@ -44,7 +44,7 @@ export function GridSpinner({ className, ariaLabel }: GridSpinnerProps) {
       for (const animation of animations ?? []) releaseAnimation(animation);
       animations = null;
       for (const registration of registrations) registration.setAnimation(null);
-      for (const cube of cubes) cube.style.removeProperty("animation");
+      for (const cube of cubes) cube.style.removeProperty("animation-name");
     };
     const updateMotion = () => {
       reset();
@@ -56,7 +56,7 @@ export function GridSpinner({ className, ariaLabel }: GridSpinnerProps) {
           if (!animations) return;
           for (let index = 0; index < cubes.length; index += 1) {
             registrations[index]?.setAnimation(animations[index] ?? null);
-            cubes[index].style.animation = "none";
+            cubes[index].style.animationName = "none";
           }
         }, 0);
       });
@@ -69,7 +69,7 @@ export function GridSpinner({ className, ariaLabel }: GridSpinnerProps) {
       reset();
       for (const registration of registrations) registration.unregister();
       visibility.dispose();
-      for (const cube of cubes) cube.style.removeProperty("animation");
+      for (const cube of cubes) cube.style.removeProperty("animation-name");
     };
   }, []);
 

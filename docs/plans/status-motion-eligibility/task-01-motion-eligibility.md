@@ -63,10 +63,10 @@ The rendered checks cover AC-UI-PERSISTENT-STATUS-MOTION-004.4 and -006.1.
 From `apps/web`:
 
 ```bash
-pnpm exec vitest run lib/ui/persistent-motion-preference.test.tsx lib/ui/persistent-motion-visibility.test.tsx components/threads/thread-status-visibility.test.tsx components/threads/thread-column-activation.test.tsx components/grid-spinner.test.tsx
+pnpm exec vitest run lib/ui/persistent-motion-preference.test.tsx lib/ui/persistent-motion-visibility.test.tsx lib/ui/compositor-spin.test.tsx lib/ui/compositor-pulse.test.tsx components/threads/thread-status-visibility.test.tsx components/threads/thread-column-activation.test.tsx components/grid-spinner.test.tsx
 pnpm e2e:run --project chromium tests/chat/persistent-animation-motion.spec.ts tests/chat/quick-chat-idle-dot.spec.ts tests/task/threads-status-motion.spec.ts tests/plugins/plugin-action-motion.spec.ts
 pnpm e2e:run --project mobile-chrome tests/chat/mobile-persistent-animation-motion.spec.ts tests/chat/mobile-quick-chat-idle-dot.spec.ts tests/task/mobile-threads-status-motion.spec.ts tests/plugins/mobile-plugin-action-motion.spec.ts
-pnpm run typecheck
+NODE_OPTIONS=--max-old-space-size=8192 pnpm run typecheck
 ```
 
 Serialize browser/build commands with the shared host lock named in the plan.
@@ -78,7 +78,9 @@ validation. Capture desktop and phone states using isolated test data.
 - Current-main baseline: `d17d84a8084b15ddf1df10ff465a51d27c780e64`.
 - Unit RED: 14 failures and 29 passes across five files before production changes.
 - Fast-forwarded to `aa229b60dd9281043f7638767777222f5723f710` before final browser validation. Its database-maintenance changes do not overlap this work.
-- Unit GREEN: all 43 focused tests pass. Ten existing compositor tests also pass.
+- Initial unit GREEN: all 43 focused tests and ten existing compositor tests passed.
+- Review fix: grid setup now changes only `animation-name`, preserving the visibility controller's CSS pause. A real Chromium regression failed before the fix when the fallback mounted in a hidden document. The desktop and phone fallback cases now pass, including offscreen preference changes. All 54 motion unit tests and changed-file lint pass.
+- Review documentation fixes: requirements 004 and 006 and the visibility design are accepted; requirement 005 remains draft. The typecheck command includes the tested heap setting.
 - Strict web lint passes. Shared lint passes with the web-only literal-string rule excluded for the existing shared Spinner label.
 - Web typecheck passes with `NODE_OPTIONS=--max-old-space-size=8192`. The default 4 GB Node heap exhausted before diagnostics.
 - Specification catalog/lint and public-doc validation pass, including 63 public-doc validator tests.

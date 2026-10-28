@@ -146,6 +146,27 @@ it("cancels grid promotion if reduced motion changes before the deferred task", 
   }
 });
 
+it("keeps hidden grid CSS fallback paused across preference changes", () => {
+  const env = motionEnvironment(false);
+  Object.defineProperty(HTMLElement.prototype, "animate", { configurable: true, value: undefined });
+  Object.defineProperty(document, "visibilityState", { configurable: true, value: "hidden" });
+  try {
+    const { container } = render(<GridSpinner />);
+    act(() => vi.runAllTimers());
+    const cubes = Array.from(container.querySelectorAll<HTMLElement>(".spinner-grid-cube"));
+    expect(cubes).toHaveLength(9);
+    expect(cubes.every((cube) => cube.style.animationPlayState === "paused")).toBe(true);
+    env.setReduced(true);
+    env.setReduced(false);
+    expect(cubes.every((cube) => cube.style.animationPlayState === "paused")).toBe(true);
+    Object.defineProperty(document, "visibilityState", { configurable: true, value: "visible" });
+    document.dispatchEvent(new Event("visibilitychange"));
+    expect(cubes.every((cube) => cube.style.animationPlayState === "")).toBe(true);
+  } finally {
+    env.restore();
+  }
+});
+
 it("reads spin timing from CSS when a presentation class changes", () => {
   const env = motionEnvironment(false);
   try {
