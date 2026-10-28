@@ -954,3 +954,10 @@ Full frontend typecheck, changed fixture ESLint/Prettier, documentation catalog
 validation and specification lint also passed on the rebased branch. The existing
 public feature/recovery documentation and screenshots need no change for this
 fixture-only correction.
+
+CodeRabbit review `5688243458` requested removal of the retained-recovery
+button's legacy 30-second visibility timeout. The assertion now uses the default
+timeout after the existing persisted FAILED-state poll and visible error
+assertion. The stopped-runtime and temporary auto-start fixture guards remain.
+The exact recovery case passed with retries disabled and the default timeout
+(`/tmp/kandev-run.e2e.1cBGvllL.log`); changed-file ESLint passed.
