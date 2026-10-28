@@ -167,15 +167,16 @@ test.describe("Mobile Create Project dialog", () => {
     await expect.poll(() => list.evaluate((node) => node.scrollTop)).toBe(0);
     const firstOption = picker.locator('[data-value^="/srv/repositories/"]').first();
     await expect(firstOption).toBeInViewport();
+    if (prCapture.capturing) {
+      await prCapture.screenshot("phone-floating-create-project-picker", {
+        caption:
+          "The phone repository picker fits the viewport with its search control and scrolling option list.",
+      });
+    }
     await firstOption.tap();
     await expect(picker).toHaveCount(0);
     await expect(dialog.locator(`[data-repository-value="${suggestions[0].path}"]`)).toHaveCount(1);
     await expect(dialog.locator("#project-name")).toHaveValue(projectName);
-    if (prCapture.capturing) {
-      await prCapture.screenshot("phone-floating-create-project-picker", {
-        caption: "The phone repository picker fits the viewport and adds the tapped suggestion.",
-      });
-    }
 
     await dialog
       .getByTestId("create-project-dialog-footer")
