@@ -386,6 +386,7 @@ Fixup review remediation on 2026-10-28:
 - Stop and join the export processor through the application context so shutdown does not leave in-flight writes running.
 - Move the new history columns, dependent index, and backfill into `runMigrations`; upgrade and replay tests exercise the boot path.
 - Correct the companion `turn-changed-files` plan and Results notes so completed history-integrity work is not described as pending or proposed.
+- Reconcile the concurrent capture-finalization criterion by keeping its landed AC-004.8 and moving interrupted content preservation to AC-004.10.
 
 A disposable real-Git feasibility probe passed during planning.
 It excluded 318 imported paths from a 319-path raw diff, retained the one turn

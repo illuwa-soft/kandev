@@ -131,10 +131,12 @@ Older captures retain an explicit repository-snapshot label because they lack th
   Expired reads shall return an explicit expired state.
 - **AC-TASKS-TURN-CHANGES-004.7:** Missing repositories, comparison failures, truncated enumeration, and missing required content shall prevent a fully ready label.
   Available entries shall remain usable with explicit partial completeness.
-- **AC-TASKS-TURN-CHANGES-004.8:** Interrupted content preservation shall retain acknowledged files and resume from durable progress while its original source remains available.
+- **AC-TASKS-TURN-CHANGES-004.10:** Interrupted content preservation shall retain acknowledged files and resume from durable progress while its original source remains available.
   Repeated delivery shall not duplicate entries, inflate retained bytes, or change the comparison.
 - **AC-TASKS-TURN-CHANGES-004.9:** Exhausted preservation attempts and executor cleanup shall leave missing content explicitly unavailable with a specific failure reason.
   Preserved files shall remain readable. Cleanup and cancellation shall remain bounded.
+
+- **AC-TASKS-TURN-CHANGES-004.8:** A capture that finalizes while a user opens or reconnects to its session shall appear without a manual reload.
 
 ### REQ-TASKS-TURN-CHANGES-005: Transcript card
 

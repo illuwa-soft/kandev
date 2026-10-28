@@ -177,15 +177,19 @@ function persistSelectedFile(target: HistoricalTurnDiffTarget, file: TurnFileCha
   });
 }
 
+type HistoricalTurnDiffViewerProps = {
+  target: HistoricalTurnDiffTarget;
+  onClose?: () => void;
+  hideCloseButton?: boolean;
+  detailActive?: boolean;
+};
+
 export const HistoricalTurnDiffViewer = memo(function HistoricalTurnDiffViewer({
   target,
   onClose,
   hideCloseButton = false,
-}: {
-  target: HistoricalTurnDiffTarget;
-  onClose?: () => void;
-  hideCloseButton?: boolean;
-}) {
+  detailActive = true,
+}: HistoricalTurnDiffViewerProps) {
   const {
     summaries,
     loading: historyLoading,
@@ -194,7 +198,7 @@ export const HistoricalTurnDiffViewer = memo(function HistoricalTurnDiffViewer({
     loadChangeSet,
     hasMore: hasMoreHistory,
     loadMore,
-  } = useSessionTurnChanges(target.sessionId);
+  } = useSessionTurnChanges(target.sessionId, { detailActive });
   const { activeChangeSetId, setActiveChangeSetId, scopeValue, setScopeValue, activeTarget } =
     useHistoricalChangeSet(target);
   const summary = summaries.find((item) => item.id === activeChangeSetId);
