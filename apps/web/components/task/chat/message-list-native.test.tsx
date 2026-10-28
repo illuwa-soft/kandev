@@ -1055,6 +1055,32 @@ describe("useNativeScrollManagement transcript pagination", () => {
     }
   });
 
+  it("lets explicit latest supersede near-edge upward intent", () => {
+    const metrics = { scrollHeight: 1000, scrollTop: 600, clientHeight: 400 };
+    const latestRef: { current: (() => boolean) | null } = { current: null };
+    const props = { metrics, sessionId: "session-latest", enabled: true, latestRef };
+    const view = render(
+      <NativeScrollManagementHarness {...props} items={[transcriptMessage(LATEST_MESSAGE_ID)]} />,
+    );
+    const element = screen.getByTestId(NATIVE_SCROLL_MANAGEMENT_TEST_ID);
+    act(() => {
+      metrics.scrollTop = 599;
+      element.dispatchEvent(new WheelEvent("wheel", { deltaY: -1 }));
+      element.dispatchEvent(new Event("scroll"));
+      expect(latestRef.current?.()).toBe(true);
+      metrics.scrollTop = 600;
+      element.dispatchEvent(new Event("scroll"));
+    });
+    metrics.scrollHeight = 1021;
+    view.rerender(
+      <NativeScrollManagementHarness
+        {...props}
+        items={[transcriptMessage(LATEST_MESSAGE_ID), transcriptMessage("next-message")]}
+      />,
+    );
+    expect(metrics.scrollTop).toBe(2_147_483_647);
+  });
+
   // @covers AC-UI-TRANSCRIPT-AUTO-SCROLL-001.18
   it("jumps to the transcript end without changing the disabled auto-scroll preference", () => {
     const metrics = { scrollHeight: 1000, scrollTop: 300, clientHeight: 400 };
@@ -2534,6 +2560,32 @@ describe("useScrollToDividerOrBottom — anchored-bar offset", () => {
     );
     expect(metrics.scrollTop).toBe(2_147_483_647);
   });
+
+  it.each(["PageDown", "ArrowDown", " ", "End", "touch"])(
+    "resumes near-edge reading after fresh downward %s input",
+    (input) => {
+      const metrics = { scrollHeight: 1000, scrollTop: 600, clientHeight: 400 };
+      const props = { isWorking: false, hasUnreadDivider: false, metrics };
+      const view = render(<AutoScrollHarness {...props} />);
+      const element = screen.getByTestId(AUTO_SCROLL_CONTAINER_TEST_ID);
+      act(() => {
+        metrics.scrollTop = 599;
+        element.dispatchEvent(new WheelEvent("wheel", { deltaY: -1 }));
+        element.dispatchEvent(new Event("scroll"));
+        if (input === "touch") {
+          element.dispatchEvent(touchEvent("touchstart", 100));
+          element.dispatchEvent(touchEvent("touchmove", 80));
+        } else {
+          element.dispatchEvent(new KeyboardEvent("keydown", { key: input, bubbles: true }));
+        }
+        metrics.scrollTop = 600;
+        element.dispatchEvent(new Event("scroll"));
+      });
+      metrics.scrollHeight = 1021;
+      view.rerender(<AutoScrollHarness {...props} messages={[...TEST_MESSAGES, {} as Message]} />);
+      expect(metrics.scrollTop).toBe(2_147_483_647);
+    },
+  );
 
   it.each(["textarea", "editable", "prevented"])(
     "keeps upward reading when End belongs to a nested %s target",

@@ -346,8 +346,10 @@ Pending upward intent belongs to its session and observed scroll origin.
 An old-edge scroll event cannot consume that intent while the reader remains
 at the old bottom. An away-from-bottom observation clears the pending origin
 but preserves reading mode. A later return to the measured bottom resumes
-following. Transcript End supersedes pending intent; keys handled by nested
-editable controls or prevented events do not.
+following. Fresh downward keys (End, PageDown, ArrowDown, and unshifted Space),
+downward touch movement, and explicit latest navigation supersede pending
+upward intent. Keys handled by nested editable controls or prevented events
+do not.
 
 A recent positive pixel wheel may record the bottom that its delta can reach.
 When its native scroll reaches that observed edge within the existing input

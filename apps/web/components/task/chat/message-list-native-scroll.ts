@@ -36,6 +36,7 @@ export const TRANSCRIPT_SENTINEL_ROOT_MARGIN = "200px 0px 0px 0px";
 // INT32_MAX: WebKit resolves Number.MAX_SAFE_INTEGER to 0 (not bottom).
 const NATIVE_BOTTOM_SCROLL_TOP = 2_147_483_647;
 const USER_SCROLL_INTENT_WINDOW_MS = 250;
+const LATER_SCROLL_KEYS = new Set(["End", "PageDown", "ArrowDown"]);
 const SCROLL_KEYS = new Set([
   "ArrowDown",
   "ArrowLeft",
@@ -665,6 +666,27 @@ function useUpwardScrollIntent({ scrollRef, sessionId, onUserScrollIntent }: Aut
     pendingUpwardScrollRef.current = element ? { sessionId, scrollTop: element.scrollTop } : null;
     onUserScrollIntent?.();
   };
+  useEffect(() => {
+    const element = scrollRef.current;
+    if (!element) return;
+    let touchY: number | undefined;
+    const onTouchStart = (event: TouchEvent) => {
+      touchY = event.touches[0]?.clientY;
+    };
+    const onTouchMove = (event: TouchEvent) => {
+      const y = event.touches[0]?.clientY;
+      if (touchY !== undefined && y !== undefined && y < touchY) {
+        pendingUpwardScrollRef.current = null;
+      }
+      touchY = y;
+    };
+    element.addEventListener("touchstart", onTouchStart, { passive: true });
+    element.addEventListener("touchmove", onTouchMove, { passive: true });
+    return () => {
+      element.removeEventListener("touchstart", onTouchStart);
+      element.removeEventListener("touchmove", onTouchMove);
+    };
+  }, [scrollRef, sessionId]);
   return { pendingUpwardScrollRef, markUpwardScrollIntent };
 }
 
@@ -741,6 +763,7 @@ function useFollowIntent({
       // Keep fresh upward intent while a queued scroll still reports the old edge.
       if (
         userReading.current &&
+        !isNearBottomRef.current &&
         isPendingUpwardScrollAtEdge(pending, sessionIdRef.current, scrollTop, gap)
       ) {
         isNearBottomRef.current = false;
@@ -977,7 +1000,8 @@ function usePersistedTranscriptScroll({
           ))
       )
         return;
-      if (event.key === "End") pendingUpwardScrollRef.current = null;
+      if (LATER_SCROLL_KEYS.has(event.key) || (event.key === " " && !event.shiftKey))
+        pendingUpwardScrollRef.current = null;
       if (SCROLL_KEYS.has(event.key)) markUserScrollIntent();
     };
     /** Persists the container's current scrollTop for the session (used when

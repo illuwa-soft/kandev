@@ -59,7 +59,8 @@ Implementation and local verification are complete. PR checks and automated revi
 
 - Initial RED runs reproduced four layout mismatches, duplicate plan marks,
   unwanted link navigation, wheel-follow failures, and obsolete frame capture.
-- GREEN: 286 tests pass across 17 files with the final production patch.
+- Initial GREEN: 286 tests pass across 17 files. Review remediation adds
+  six near-edge cases; all 292 focused tests pass with the final production patch.
 - Nested keyboard regression: three cases fail with the new guard removed.
   The guard preserves upward intent for textarea, contenteditable, and prevented End.
 - Strict changed-file lint and documentation validation pass.
@@ -85,6 +86,24 @@ Current-main content-reflow safeguards are retained. The layout E2E uses the
 existing navigation fixture without importing the research benchmark helpers.
 Browser replay preserves the source event ordering and assertion bounds.
 Unit regressions provide the initial RED boundary for those replay scenarios.
+
+## Review remediation
+
+A review identified stale upward intent after a return from a 1 px gap.
+Five unit regressions reproduce failures for downward keys, touch, and explicit
+latest navigation. End already passes. Fresh downward intent and latest
+ownership now release the stale origin. Nested controls keep their key guard.
+The six cases pass with the fix; changed-file lint and the 6 GiB typecheck pass.
+
+The browser replay now includes both 160 px and 1 px returns. It focuses the
+transcript before PageDown and waits for native movement and scrollend before
+appending output. A coordinate click in the 1 px case selected a Copy button;
+the resulting nested-key behavior was not a transcript return. Temporary event
+traces established that target and were removed. Outcome bounds stay unchanged.
+All three desktop scroll checks pass after focusing the transcript. An earlier
+full batch had one fixture startup failure (`steps` was null before the test);
+the single rerun passes. All seven phone auto-scroll checks pass. Refreshed
+screenshots and exact-head CI/review remain delivery steps tracked in the PR.
 
 ## Documentation impact
 
