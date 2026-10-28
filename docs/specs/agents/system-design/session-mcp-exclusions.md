@@ -263,7 +263,9 @@ On rejection, retain committed choices and a local error. On conflict, retain
 addition drafts separately, keep exclusion rows at their committed state,
 announce that saved choices changed, and offer Reload choices followed by
 explicit review and a repeated exclusion action. Reuse the assignment controller's
-conflict handling. Keep shared stale-page recovery ownership. Pending/failed/deferred timing stays in `McpSelectionNotice`, not
+conflict handling. Application Retry writes the committed positive IDs directly,
+without setting or acknowledging the addition draft. Do not offer Retry while a
+save is running or a rejected save awaits Reload choices. Keep shared stale-page recovery ownership. Pending/failed/deferred timing stays in `McpSelectionNotice`, not
 duplicated as connection badges. Use a translated live status region. Do not
 display internal revisions in primary copy.
 

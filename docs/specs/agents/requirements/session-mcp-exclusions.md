@@ -87,7 +87,9 @@ changing the owners that supplied it.
   newer exclusion or restoration. Reopening shall recover the accepted baseline.
 - **AC-AGENTS-SESSION-MCP-EXCLUSIONS-002.4:** Failed application shall preserve
   the last accepted baseline and saved choice. The UI shall offer retry and
-  explain next-start application. It shall not claim rollback or verified absence
+  explain next-start application. Retry shall retain an unsaved addition draft
+  and remain unavailable after a rejected save until choices reload successfully.
+  It shall not claim rollback or verified absence
   when a provider partially accepted a failed operation.
 - **AC-AGENTS-SESSION-MCP-EXCLUSIONS-002.5:** Pending comparison shall identify
   exclusion as removal from the saved setup and restoration as addition when

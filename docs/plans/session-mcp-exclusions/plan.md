@@ -837,3 +837,19 @@ Local verification for the ready-review rebase:
   only in those upstream maintenance files. Focused backend/frontend checks
   passed again on the final tree (three Go race packages and all 64 frontend
   cases); GitHub CI and reviewer findings remain pending.
+
+### Ready-review application retry correction
+
+Greptile thread `PRRT_kwDOQ2-eWs6xLXDu` identified a valid draft-preservation bug.
+Application Retry used the addition-edit callback, replacing a retained rejected
+draft with saved IDs even when the accepted revision was invalid. Two regression
+cases failed before the fix and passed after it. Retry now writes saved IDs
+without editing the draft and is unavailable until Reload choices succeeds after
+a rejected save. The shared editor rejects stale captured callbacks without a
+write; exclusion omission continues to preserve committed exclusions. Desktop
+and phone pending-state journeys now cover this combined recovery path. Final
+validation passed: 66 frontend cases, typecheck, changed-file lint/format,
+catalog/spec checks and both desktop/phone recovery journeys with retries
+disabled. Browser logs: `/tmp/kandev-run.e2e.N7s3C453.log` and
+`/tmp/kandev-run.e2e.G4SYbNo5.log`. GitHub thread disposition remains pending
+publication of the fix.

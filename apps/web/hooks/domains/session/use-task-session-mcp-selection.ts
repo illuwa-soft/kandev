@@ -153,7 +153,7 @@ export function useTaskSessionMCPSelection(context: SessionMCPContext) {
     state,
     disabled: blocked,
     reload: editor.reload,
-    retry: () => save(savedSelectedIds),
+    retry: blocked ? undefined : () => void editor.save(savedSelectedIds).catch(() => undefined),
     retrying: editor.saving,
     error,
   };

@@ -9,6 +9,7 @@ import type {
 import { SessionPage } from "../pages/session-page";
 import { openMCPComposerCustomization } from "./mcp-composer";
 import { expectMCPCustomizationScrolling } from "./mcp-customization-scrolling";
+import { PrAssetCapture } from "./pr-asset-capture";
 
 export async function checkMCPPendingChanges(
   page: Page,
@@ -167,9 +168,28 @@ export async function checkMCPPendingChanges(
       "Changes could not be applied",
     );
     await expect(pending.getByRole("listitem")).toHaveCount(3);
+    await search.fill("Pending added");
+    rejectSave = true;
+    await surface.getByRole("checkbox").click();
+    await expect(surface.getByRole("alert")).toBeVisible();
+    await expect(body.getByRole("button", { name: "Retry MCP application" })).toHaveCount(0);
+    const capture = new PrAssetCapture(page, "mcp-retry-recovery.spec.ts");
+    await capture.screenshot(mobile ? "phone" : "desktop", {
+      caption: "Reload choices before retrying application; the rejected draft remains visible",
+    });
+    capture.flush();
+    rejectSave = false;
+    await surface.getByRole("button", { name: "Reload choices", exact: true }).click();
+    await expect(surface.getByRole("checkbox")).toBeEnabled();
+    await expect(surface.getByRole("checkbox")).not.toBeChecked();
     const previousWrites = writes;
     await body.getByRole("button", { name: "Retry MCP application" }).click();
     await expect.poll(() => writes).toBe(previousWrites + 1);
+    await expect(surface.getByRole("checkbox")).toBeEnabled();
+    await expect(surface.getByRole("checkbox")).not.toBeChecked();
+    expect(
+      (await api.getMCPSelections("task_session", sessionId, seed.workspaceId)).definition_ids,
+    ).toEqual([added.id]);
     await expect(pending.getByRole("listitem")).toHaveCount(3);
 
     timing = "pending_idle";

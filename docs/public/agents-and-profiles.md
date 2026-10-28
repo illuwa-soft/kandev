@@ -1109,7 +1109,8 @@ requires a reload before another attempt.
 Repository and profile editors use **Save changes**. Session Customize saves
 after an explicit selection change.
 
-Application retry remains available for a saved session setup that failed to apply.
+Application retry uses the saved session setup and keeps your checkbox draft.
+After a rejected save, choose **Reload choices** before retrying application.
 The pending-change list continues to describe the saved choices while a rejected
 checkbox draft remains visible.
 

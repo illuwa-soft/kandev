@@ -184,3 +184,20 @@ configuration/pending designs, and the composition ADR record the session-only
 exception. Public docs validators, catalog/spec lint, and whitespace checks pass.
 These tests prove Kandev's mock-provider and UI contracts, not live-provider
 connectivity or revocation of independently configured tools.
+
+### Ready-review recovery correction (2026-10-28)
+
+Greptile identified that application Retry passed saved IDs through the addition
+change callback. That replaced a rejected draft, including before Reload choices
+restored the accepted revision. Two hook regressions reproduced the loss for
+successful and failed retry outcomes. Retry now writes saved IDs directly and
+is not offered while saving or awaiting reload after a rejected save. The shared
+editor still guards a previously captured callback. Exclusions are omitted from
+the retry request and therefore preserved. Desktop/phone pending-state coverage
+now exercises rejected edits, reload, retry and the retained draft together.
+Requirements, design and public recovery instructions describe this behavior.
+
+Post-fix validation: 66 frontend cases, full typecheck, changed-file lint and
+format, catalog/spec validation, and desktop/phone recovery journeys passed
+with retries disabled. Existing pending, saved-ID, draft and exclusion
+assertions remain intact.
