@@ -486,3 +486,20 @@ func TestTurnCheckpointCaptureRejectsHistoryMoveDuringSnapshot(t *testing.T) {
 		t.Fatalf("failed capture retained a checkpoint ref: %s", refs)
 	}
 }
+
+func TestTurnCheckpointSyntheticTreeCommitWrapsTree(t *testing.T) {
+	repoDir, cleanup := setupTestRepo(t)
+	t.Cleanup(cleanup)
+	operator := NewGitOperator(repoDir, newTestLogger(t), nil)
+	treeOID := strings.TrimSpace(runGit(t, repoDir, "rev-parse", "HEAD^{tree}"))
+	commitOID, err := operator.turnCheckpointSyntheticTreeCommit(context.Background(), treeOID, turnCheckpointSHA1)
+	if err != nil {
+		t.Fatalf("synthetic comparison commit: %v", err)
+	}
+	if got := strings.TrimSpace(runGit(t, repoDir, "cat-file", "-t", commitOID)); got != "commit" {
+		t.Fatalf("object type = %q, want commit", got)
+	}
+	if got := strings.TrimSpace(runGit(t, repoDir, "rev-parse", commitOID+"^{tree}")); got != treeOID {
+		t.Fatalf("commit tree = %q, want %q", got, treeOID)
+	}
+}

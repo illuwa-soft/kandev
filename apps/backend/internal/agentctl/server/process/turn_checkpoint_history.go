@@ -421,9 +421,13 @@ func (g *GitOperator) turnCheckpointMergeTree(ctx context.Context, base, upstrea
 		return "", turnCheckpointFailure(turnchanges.ReasonComparisonFailed, err)
 	}
 	defer cleanup()
+	localCommit, err := g.turnCheckpointSyntheticTreeCommit(ctx, localTree, hashAlgorithm)
+	if err != nil {
+		return "", err
+	}
 	environment := turnCheckpointMergeContextEnvironment(view, localTree)
 	stdout, exitCode, err := g.runTurnCheckpointGitWithEnvironment(ctx, view.operator.workDir, environment, []string{
-		"merge-tree", "--write-tree", "--merge-base=" + base, upstream, localTree,
+		"merge-tree", "--write-tree", "--merge-base=" + base, upstream, localCommit,
 	})
 	if err != nil {
 		return "", turnCheckpointFailure(turnchanges.ReasonComparisonFailed, err)
@@ -436,6 +440,27 @@ func (g *GitOperator) turnCheckpointMergeTree(ctx context.Context, base, upstrea
 	}
 	treeOID := strings.TrimSpace(strings.SplitN(string(stdout), "\n", 2)[0])
 	return treeOID, nil
+}
+
+// turnCheckpointSyntheticTreeCommit gives merge-tree a commit for the local
+// tree. Older Git versions reject a bare tree as the second branch argument,
+// so the three-way merge always receives commit objects.
+func (g *GitOperator) turnCheckpointSyntheticTreeCommit(
+	ctx context.Context,
+	treeOID, hashAlgorithm string,
+) (string, error) {
+	environment := turnCheckpointCommitEnvironment(time.Now().UTC())
+	output, err := g.turnCheckpointOutputWithEnvironment(ctx, "", environment,
+		"commit-tree", treeOID, "-m", turnCheckpointBaselineMessage)
+	if err != nil {
+		return "", turnCheckpointFailure(turnchanges.ReasonComparisonFailed, err)
+	}
+	commitOID := strings.TrimSpace(string(output))
+	if !validCheckpointOID(commitOID, hashAlgorithm) {
+		return "", turnCheckpointFailure(
+			turnchanges.ReasonComparisonFailed, errors.New("git commit-tree returned an invalid local comparison commit"))
+	}
+	return commitOID, nil
 }
 
 func validTurnCheckpointMergeOID(oid string) bool {
