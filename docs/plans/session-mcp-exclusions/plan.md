@@ -961,3 +961,33 @@ timeout after the existing persisted FAILED-state poll and visible error
 assertion. The stopped-runtime and temporary auto-start fixture guards remain.
 The exact recovery case passed with retries disabled and the default timeout
 (`/tmp/kandev-run.e2e.1cBGvllL.log`); changed-file ESLint passed.
+
+
+### Damaged-workspace fixture isolation (2026-10-28)
+
+The prior published head completed CI with 89 passed and 11 skipped checks.
+The complete 118-report browser audit still found one retry: storage discovery
+ran after deletion fixtures that left an empty workspace marker. The storage
+page correctly reported unavailable data. The three-case local sequence
+reproduced the same undefined-total failure with retries disabled
+(`/tmp/kandev-run.e2e.lEjGjLo1.log`).
+
+The damaged-task helper now retains the original marker and exposes cleanup.
+All callers restore it and remove the fixture-owned file in `finally`, after
+the existing retained-file, branch, deletion and restart assertions. Cleanup
+does not recreate a marker already removed by normal cleanup. No storage or
+deletion product behavior, assertion timeout, or retry policy changed.
+
+The same three-case sequence passes (`/tmp/kandev-run.e2e.iMnuHdJ2.log`).
+All three phone callers pass (`/tmp/kandev-run.e2e.4xvd13h8.log`), as does the
+desktop Tasks page caller (`/tmp/kandev-run.e2e.PzxRu3Gg.log`), with retries
+disabled. Full typecheck and changed-file ESLint/Prettier pass. Public docs and
+UI captures remain accurate. Fresh CI and automated review are required after
+publication; the preceding green checks do not waive the observed retry.
+
+Main advanced without overlapping PR paths. The exact synthetic merge of the
+preceding production tree with main `f9bfdcd8907d57a067bce3484d77dd75a1cc32b7`
+passed 79 frontend cases, full typecheck, five MCP backend race packages, the
+streams race package, and desktop/phone MCP pending-retry journeys. Synthetic
+commit: `ac14dfab98ebbb626bfd3fb943b5cf37043bcefd`. The current correction changes
+only test cleanup and this record; final base/head evidence remains external.
