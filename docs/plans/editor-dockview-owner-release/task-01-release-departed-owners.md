@@ -87,3 +87,15 @@ existing composition was intact. No actionable UI-polish finding was observed.
 Browser assertions establish API ownership release and restoration, not heap
 leak freedom or a broad task-switch speed improvement. Public docs need no changes because user procedures,
 configuration, visible composition and public contracts remain the same.
+
+
+CI exposed incomplete WebSocket client doubles in three existing consumer
+fixtures. Both frontend shards failed when the new cleanup called the missing
+`unsubscribeUser` method. A local run reproduced 26 failures before the fix.
+The file-browser, chat-input and plan-draft fixtures now model the matching
+subscribe/unsubscribe methods. The combined seven-file consumer and ownership
+run passed 81 tests; strict lint and the 8 GB typecheck passed again.
+
+```bash
+pnpm exec vitest run components/task/file-browser-move-selection.test.tsx components/task/file-browser-move-settlement.test.tsx components/task/chat/chat-input-area-context-submission.test.tsx hooks/domains/kanban/use-plan-implementation-draft.test.tsx hooks/domains/kanban/use-implement-fresh-draft.test.tsx hooks/domains/settings/use-editors.test.ts components/task/dockview-desktop-layout-hooks.test.tsx
+```
