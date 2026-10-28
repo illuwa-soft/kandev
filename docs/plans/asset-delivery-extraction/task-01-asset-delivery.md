@@ -52,7 +52,7 @@ logic and apply scoped lint to touched files.
 
 ```bash
 cd apps/web
-node --test scripts/precompress-assets.test.mjs
+pnpm exec vitest run scripts/precompress-assets.test.mjs
 pnpm exec vitest run components/diff/diff-viewer-resolver.test.tsx components/task/file-editor-content.test.tsx
 pnpm run build:vite
 NODE_OPTIONS=--max-old-space-size=8192 pnpm run typecheck
@@ -126,6 +126,11 @@ receive the complete compressed representation without mutating the request.
 The webapp package and scoped Go lint pass. Added negotiation cases preserve
 implicit identity preference and reject explicitly excluded identity responses
 for assets without a compressed representation, including fonts.
+
+CI discovered the compression test with Vitest, but its original Node test API
+registered no Vitest suite. The exact Vitest command reproduces that failure.
+The test now uses Vitest's test and cleanup APIs; both compression cases pass
+through the same project selection used by CI.
 
 ## Documentation impact
 

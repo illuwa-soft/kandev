@@ -4,12 +4,12 @@ import os from "node:os";
 import path from "node:path";
 import { randomBytes } from "node:crypto";
 import { gunzipSync } from "node:zlib";
-import { test } from "node:test";
+import { test } from "vitest";
 import { precompressAssets } from "./precompress-assets.mjs";
 
 test("compressed build assets are deterministic, smaller, and byte-exact", async (t) => {
   const root = await mkdtemp(path.join(os.tmpdir(), "kandev-gzip-"));
-  t.after(() => rm(root, { recursive: true, force: true }));
+  t.onTestFinished(() => rm(root, { recursive: true, force: true }));
   const out = path.join(root, "custom-output", "assets");
   await mkdir(out, { recursive: true });
   const source = Buffer.from("export const repeated = true;\n".repeat(200));
