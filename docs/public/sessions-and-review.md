@@ -24,9 +24,18 @@ The expanded question supports the same formatting and reference links.
 Selecting a reference label in the collapsed summary expands the row.
 Opening a reference does not answer the question or change its status.
 
-Context paragraphs, permission requests, and your custom answers remain literal text.
-Clarification questions do not display embedded HTML, images, tables, or code panels.
+Pending shared context supports paragraphs, line breaks, links, bold, italic,
+strikethrough, inline code, simple lists, and tables. Table overflow stays
+inside the table area. HTTP and HTTPS references open in another tab. Resolved
+context in History, permission requests, and custom answers remain literal text.
+Clarification questions do not display embedded HTML, images, headings,
+blockquotes, or code panels. Tables are supported only in pending shared context.
 File references remain labels rather than opening workspace files.
+
+Long context starts at its content height, up to an initial limit. Select
+**Expand to available space** or drag the panel's top edge to use more of the
+visible host. Select **Reset panel size** to return to content sizing. The
+panel keeps space for the chat input and, in Threads, a minimum transcript area.
 
 ## Start a parallel session
 
@@ -75,17 +84,17 @@ Prompts support pasted, dropped, or selected attachments. A prompt can contain a
 
 Right-click an agent tab on desktop to manage it. On phones, open **Sessions**, then select the session row's **Session actions** button. Available actions depend on the session's current state.
 
-| Action             | Effect                                                                                                                                                                     |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Rename**         | Desktop: changes the session's display name, up to 120 Unicode code points                                                                                                                                         |
-| **Set as Primary** | Makes a stoppable session the task's primary target                                                                                                                        |
-| **Stop**           | Cancels the active agent turn for this session                                                                                                                             |
-| **Restart session** | Stops and resumes the same active session. Keeps its history and workspace without sending a prompt. |
-| **Resume**         | Attempts to continue a completed, failed, or cancelled session                                                                                                             |
-| **Delete**         | Permanently removes the conversation; if it was primary, another session is promoted when possible. The task workspace and its files are kept; a later session reuses them |
-| **Share**          | Opens the publishing preview for an eligible session                                                                                                                       |
-| **Handoff**        | Opens the launch dialog with Blank context. Select a summary when you want to include this conversation                                                                    |
-| **Close Others**   | Closes other visible agent panels without deleting their sessions                                                                                                          |
+| Action              | Effect                                                                                                                                                                     |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Rename**          | Desktop: changes the session's display name, up to 120 Unicode code points                                                                                                 |
+| **Set as Primary**  | Makes a stoppable session the task's primary target                                                                                                                        |
+| **Stop**            | Cancels the active agent turn for this session                                                                                                                             |
+| **Restart session** | Stops and resumes the same active session. Keeps its history and workspace without sending a prompt.                                                                       |
+| **Resume**          | Attempts to continue a completed, failed, or cancelled session                                                                                                             |
+| **Delete**          | Permanently removes the conversation; if it was primary, another session is promoted when possible. The task workspace and its files are kept; a later session reuses them |
+| **Share**           | Opens the publishing preview for an eligible session                                                                                                                       |
+| **Handoff**         | Opens the launch dialog with Blank context. Select a summary when you want to include this conversation                                                                    |
+| **Close Others**    | Closes other visible agent panels without deleting their sessions                                                                                                          |
 
 Restart is available while a session is starting, running, or waiting for input. Stopping the primary session can make another active session primary, as with a normal Stop. If Stop fails, Kandev does not attempt Resume. If Resume fails, the conversation remains available for recovery. A lost connection between the two actions can leave the session stopped.
 
@@ -196,6 +205,16 @@ original stream and replays committed output from its durable cursor. It does
 not resend the prompt or start a replacement conversation. Legacy streams use
 bounded intake and can show the same uncertain state when their missing output
 cannot be replayed.
+
+Kandev prepares large tool output before it enters the delivery stream. A tool
+result that is too large for direct display keeps its category, status, and
+identity, together with a bounded preview and an explicit truncation notice. A
+failed delivery write causes Kandev to request cancellation of the current turn.
+Kandev keeps reading, commits the real terminal when storage permits, and
+otherwise preserves the uncertain outcome. Delivery health is checked in the background,
+so the recovery card can appear promptly even when the agent is quiet or the
+browser is closed. A live agent process does not prove that output delivery
+still works.
 
 An older session can already have its conversation loaded while a delivery block
 still prevents new messages. For an empty historical delivery block, the card
@@ -424,6 +443,8 @@ Messages show peer attribution, and Kandev gives the receiving agent hidden repl
 ## Use the workbench
 
 Desktop panel groups can host agent chat, files, terminals, Changes, the task plan, previews, and GitHub pull-request detail. Use **+** to add a panel. Mobile exposes sessions, files, terminal, and changes through task navigation and sheets. On a phone, the hamburger opens the same app menu from Home, listings, and the workbench. Tap the task title and chevron to switch tasks; the picker opens as an inset bottom card. Tap the **Kanban**, **Threads**, or **List** title dropdown for view options, search, filters, and display settings. The app menu uses **Home** for all listing modes, with **Quick Chat** and **Quick terminal** directly below it. Its collapsible **Tasks** section contains saved views, filters, and task actions; the adjacent **+** creates a task even when the section is collapsed. **Automations** and **Integrations** start collapsed; expand their headings to browse automations or connected providers. Integrations includes settings even before a provider is connected. **Utilities** follows these sections, with Settings before Stats. The current-session control shows the active agent's icon and name.
+
+In **Files**, right-click a file or folder and select **Copy path**. On a phone, use the row's visible actions menu. Filename search results offer the same action. The copied path is the node's workspace-relative path, including its repository prefix in a multi-repository task. Copy path is unavailable for a multiple selection.
 
 In multi-select view filters, selected options appear first when search is empty. Workflow-step options keep their workflow headings. Typing a search filters and ranks the matching options as usual.
 

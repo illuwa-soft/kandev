@@ -332,7 +332,7 @@ Open the context menu on any file or folder in the Files tree: right-click on de
 
 **VS Code (Embedded)** runs code-server inside the active task environment and displays it in a workbench panel. Opening it starts code-server independently of the agent process. It launches with `--auth none` and binds `0.0.0.0` on a random port inside that runtime; network/firewall isolation is therefore important, especially for Local, Kubernetes, and SSH environments. If the binary is absent, agentctl attempts to download it into `~/.kandev/tools/code-server`; first use needs a supported execution platform and access to the [code-server release](https://github.com/coder/code-server/releases/tag/v4.130.0). Native Windows Local and Worktree sessions do not support this integration. Linux-backed Local Docker, Kubernetes, Sprites, and supported SSH sessions can offer it even when the Kandev app runs on Windows. The task-detail topbar follows the active session's executor capability, never the visitor's browser platform; other configured editors remain available. Use the panel error and task-environment logs when installation, startup, or proxying fails.
 
-Use the workbench top bar's split-editor action to open the selected session worktree in the default editor. Its menu lets you choose another configured editor. A file's **Open with** menu can also open a specific editor, copy the path, or ask the operating system to show the folder.
+Use the workbench top bar's split-editor action to open the selected session worktree in the default editor. Its menu lets you choose another configured editor. A file's **Open with** menu can also open a specific editor, copy the path, or ask the operating system to show the folder. External-editor file actions use the file's repository worktree when it can be identified. If the repository target is unavailable or ambiguous, those editor actions are disabled until it can be resolved.
 
 Open **Settings > Preferences > Terminal & Editors** (`/settings/preferences/terminal-editors`) to set a default and configure integrations. Kandev discovers these built-in desktop editors when installed:
 
@@ -403,6 +403,8 @@ to the selected executor instead. The environment is fixed when the PTY starts, 
 terminal after a session resume or credential-policy change.
 
 On desktop, select **+ > Terminals > New Terminal**. Parked terminal sessions can appear in the same menu for reopening. The tab context menu offers **Rename** and **Terminate**, not a separate Close action. Selecting the tab's **X** deletes the terminal and asks for confirmation when it is busy. Removing the panel through layout management can instead park it and keep its PTY alive; terminating a live terminal or deleting a parked entry destroys it. On mobile, select **Terminal** in task navigation and use the terminal picker to create another.
+
+When you scroll up in a task terminal or desktop dev-server output, select **Jump to latest output** to return to the newest output. The action disappears at the bottom. New output does not pull you away from the scrollback you are reading.
 
 Do not confuse a user terminal with a CLI-passthrough agent tab: both use PTYs, but only the agent tab is the agent's native interface. `Cmd/Ctrl+J` toggles the bottom terminal area.
 
