@@ -97,6 +97,14 @@ function canLinkEntityReferences(panelState: ChatPanelState): boolean {
   return !hasContextComments(panelState) && (!queuesInput || panelState.isQueueReady);
 }
 
+function entityReferenceComposerProps(panelState: ChatPanelState) {
+  return {
+    entityReferencesEnabled: true as const,
+    entityReferenceLinkingEnabled: canLinkEntityReferences(panelState),
+    hasContextComments: hasContextComments(panelState),
+  };
+}
+
 /**
  * Builds the (large) prop object for `ChatInputContainer` from panel state
  * and derived values. Kept separate so `ChatInputArea`'s render body stays
@@ -145,8 +153,6 @@ export function useComposerProps(args: ComposerPropsArgs) {
   );
   const canQueueWhileStarting = panelState.inputMode === "queue" && panelState.isQueueReady;
   const supportsSteering = panelState.supportsSteering;
-  const hasPendingContextComments = hasContextComments(panelState);
-  const entityReferenceLinkingEnabled = canLinkEntityReferences(panelState);
   return {
     ...promptSuggestion,
     onSubmit: handleSubmit,
@@ -156,8 +162,7 @@ export function useComposerProps(args: ComposerPropsArgs) {
     workspaceId: composerWorkspaceId,
     workspaceResolutionFailed,
     onRetryWorkspaceResolution,
-    entityReferencesEnabled: true as const,
-    entityReferenceLinkingEnabled,
+    ...entityReferenceComposerProps(panelState),
     taskTitle: panelState.task?.title,
     taskDescription: panelState.taskDescription ?? "",
     planModeEnabled,
@@ -182,7 +187,6 @@ export function useComposerProps(args: ComposerPropsArgs) {
     showRequestChangesTooltip,
     onRequestChangesTooltipDismiss,
     pendingCommentsByFile: panelState.pendingCommentsByFile,
-    hasContextComments: hasPendingContextComments,
     submitKey: panelState.chatSubmitKey,
     hasAgentCommands: !!(panelState.agentCommands && panelState.agentCommands.length > 0),
     isFailed: panelState.isFailed,

@@ -462,11 +462,8 @@ export const TipTapInput = forwardRef<TipTapInputHandle, TipTapInputProps>(funct
   },
   ref,
 ) {
-  const { menu, mentionSuggestion, slashSuggestion, slashCommands } = useComposerMenus(
-    sessionId,
-    taskId ?? null,
-    workspaceId,
-  );
+  const menuState = useComposerMenus(sessionId, taskId ?? null, workspaceId);
+  const { menu, mentionSuggestion, slashSuggestion, slashCommands } = menuState;
   const entityReferences = useEntityReferenceComposer({
     enabled: entityReferencesEnabled,
     linkOnSendEnabled: entityReferenceLinkingEnabled ?? true,
