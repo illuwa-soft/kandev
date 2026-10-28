@@ -137,3 +137,7 @@ sequential
 ## Results
 
 Implemented versioned comparison negotiation, direct/upstream-adjusted/history-unavailable selection, controlled `merge-tree` baseline construction under an owned comparison ref, conditional write-once acceptance, and effective-pair projection through the coordinator. Real-Git tests cover upstream rebase exclusion, dirty baseline preservation, legitimate reverts, conflicts, and HEAD movement without target evidence. Older agentctl responses remain explicitly legacy raw instead of looping or silently upgrading.
+
+### Fixup remediation (2026-10-28)
+
+Adjusted comparisons wrap the local tree in a synthetic commit before invoking `merge-tree`. Git 2.43 rejects a bare tree as the second branch argument, while the commit form works across supported versions. `TestTurnCheckpointSyntheticTreeCommitWrapsTree` guards the wrapper.

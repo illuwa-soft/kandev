@@ -379,6 +379,7 @@ Follow-up review remediation on 2026-10-28:
 Fixup review remediation on 2026-10-28:
 
 - Capture provenance before preparing the snapshot so a concurrent rebase cannot pair old content with new history; the post-snapshot verification test moves `HEAD` from a `post-index-change` hook and requires rejection.
+- Wrap the local comparison tree in a synthetic commit before `merge-tree`; Git 2.43 rejects a bare tree as the second branch, while the wrapped form works on 2.43 and 2.47.
 - Treat only an unexpired export claim as live; an expired claim from an exhausted attempt now settles unavailable instead of repeating the loop.
 - Keep file-specific export failures on their entries and continue paging; the regression exports 30 files with one oversized file and verifies the remaining files stay ready.
 - Retry a saved synthetic selection once its repository settles; covered in the hook and mounted-viewer tests.
