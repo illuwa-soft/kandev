@@ -2738,6 +2738,10 @@
   "workspaceFolderLiveLinkNotice": "As pastas são ligações ativas. As edições alteram os ficheiros originais. As regras de acesso do agente continuam a aplicar-se. Carregar pasta cria uma cópia separada.",
   "turnChangesFileCount_one": "{{count}} ficheiro alterado",
   "turnChangesFileCount_other": "{{count}} ficheiros alterados",
+  "turnChangesRepositoryChangeCount_one": "{{count}} alteração no repositório",
+  "turnChangesRepositoryChangeCount_other": "{{count}} alterações no repositório",
+  "turnChangesAvailableChangeCount_one": "{{count}} alteração disponível",
+  "turnChangesAvailableChangeCount_other": "{{count}} alterações disponíveis",
   "turnChangesBinaryCount_one": "{{count}} ficheiro binário",
   "turnChangesBinaryCount_other": "{{count}} ficheiros binários",
   "turnChangesBinary": "Binário",
@@ -2900,5 +2904,9 @@
   "questionImageInvalid": "Esta imagem está danificada ou tem um formato não suportado.",
   "questionImageTooLarge": "Esta imagem excede o limite de tamanho da pré-visualização.",
   "questionImageUnavailable": "Imagem indisponível. Pode continuar a responder à pergunta.",
-  "questionImageRetry": "Tentar novamente"
+  "questionImageRetry": "Tentar novamente",
+  "turnChangesContentReasonTimeout": "A preservação do conteúdo expirou antes de guardar este ficheiro.",
+  "turnChangesContentReasonMissing": "O executor já não tem o conteúdo deste ficheiro.",
+  "turnChangesContentReasonInterrupted": "A preservação do conteúdo parou antes de guardar este ficheiro.",
+  "turnChangesContentReasonSizeLimit": "Este ficheiro excede o limite de tamanho do conteúdo retido."
 }

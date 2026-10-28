@@ -2738,6 +2738,10 @@
   "workspaceFolderLiveLinkNotice": "Ƒōĺďēŕś àŕē ĺĩvē ĺĩńķś. Ēďĩţś ćĥàńĝē ţĥē ōŕĩĝĩńàĺ ƒĩĺēś. Àĝēńţ àććēśś ŕũĺēś śţĩĺĺ àƥƥĺŷ. Ũƥĺōàď ƒōĺďēŕ ćŕēàţēś à śēƥàŕàţē ćōƥŷ.",
   "turnChangesFileCount_one": "{{count}} ćĥàńĝēď ƒĩĺē",
   "turnChangesFileCount_other": "{{count}} ćĥàńĝēď ƒĩĺēś",
+  "turnChangesRepositoryChangeCount_one": "{{count}} ŕēƥōśĩťōŕŷ ćĥàńĝē",
+  "turnChangesRepositoryChangeCount_other": "{{count}} ŕēƥōśĩťōŕŷ ćĥàńĝēś",
+  "turnChangesAvailableChangeCount_one": "{{count}} àvàĩĺàƀĺē ćĥàńĝē",
+  "turnChangesAvailableChangeCount_other": "{{count}} àvàĩĺàƀĺē ćĥàńĝēś",
   "turnChangesBinaryCount_one": "{{count}} ƀĩńàŕŷ ƒĩĺē",
   "turnChangesBinaryCount_other": "{{count}} ƀĩńàŕŷ ƒĩĺēś",
   "turnChangesBinary": "Ɓĩńàŕŷ",
@@ -2900,5 +2904,9 @@
   "questionImageInvalid": "Ţĥĩś ĩḿàĝē ĩś ďàḿàĝēď ōŕ ĥàś àń ũńśũƥƥōŕţēď ƒōŕḿàţ.",
   "questionImageTooLarge": "Ţĥĩś ĩḿàĝē ēxćēēďś ţĥē ƥŕēvĩēŵ śĩźē ĺĩḿĩţ.",
   "questionImageUnavailable": "Ĩḿàĝē ũńàvàĩĺàƀĺē. Ŷōũ ćàń śţĩĺĺ àńśŵēŕ ţĥē qũēśţĩōń.",
-  "questionImageRetry": "Ŕēţŕŷ"
+  "questionImageRetry": "Ŕēţŕŷ",
+  "turnChangesContentReasonTimeout": "Ĉōńťēńť ƥŕēśēŕvàťĩōń ťĩɱēď ōúť ƀēƒōŕē ťĥĩś ƒĩĺē ŵàś śàvēď.",
+  "turnChangesContentReasonMissing": "Ťĥē ēxēćúťōŕ ńō ĺōńĝēŕ ĥàś ťĥĩś ƒĩĺē’ś ćōńťēńť.",
+  "turnChangesContentReasonInterrupted": "Ĉōńťēńť ƥŕēśēŕvàťĩōń śťōƥƥēď ƀēƒōŕē ťĥĩś ƒĩĺē ŵàś śàvēď.",
+  "turnChangesContentReasonSizeLimit": "Ťĥĩś ƒĩĺē ēxćēēďś ťĥē ŕēťàĩńēď ćōńťēńť śĩźē ĺĩɱĩť."
 }

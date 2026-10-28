@@ -2738,6 +2738,10 @@
   "workspaceFolderLiveLinkNotice": "資料夾是實時連結。編輯會更改原始檔案。代理的存取規則仍然適用。「上傳資料夾」會建立單獨的副本。",
   "turnChangesFileCount_one": "{{count}} 個更改檔案",
   "turnChangesFileCount_other": "{{count}} 個更改檔案",
+  "turnChangesRepositoryChangeCount_one": "{{count}} 項儲存庫變更",
+  "turnChangesRepositoryChangeCount_other": "{{count}} 項儲存庫變更",
+  "turnChangesAvailableChangeCount_one": "{{count}} 項可用變更",
+  "turnChangesAvailableChangeCount_other": "{{count}} 項可用變更",
   "turnChangesBinaryCount_one": "{{count}} 個二進制檔案",
   "turnChangesBinaryCount_other": "{{count}} 個二進制檔案",
   "turnChangesBinary": "二進制",
@@ -2900,5 +2904,9 @@
   "questionImageInvalid": "此圖像已損壞或格式不受支援。",
   "questionImageTooLarge": "此圖像超過預覽大小限制。",
   "questionImageUnavailable": "圖像不可用。您仍可回答問題。",
-  "questionImageRetry": "重試"
+  "questionImageRetry": "重試",
+  "turnChangesContentReasonTimeout": "儲存此檔案前內容保留已超時。",
+  "turnChangesContentReasonMissing": "執行器已不再保留此檔案的內容。",
+  "turnChangesContentReasonInterrupted": "儲存此檔案前內容保留已停止。",
+  "turnChangesContentReasonSizeLimit": "此檔案超出保留內容的大小限制。"
 }

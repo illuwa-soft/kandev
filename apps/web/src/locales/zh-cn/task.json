@@ -2738,6 +2738,10 @@
   "workspaceFolderLiveLinkNotice": "文件夹是实时链接。编辑会更改原始文件。代理的访问规则仍然适用。“上传文件夹”会创建单独的副本。",
   "turnChangesFileCount_one": "{{count}} 个更改文件",
   "turnChangesFileCount_other": "{{count}} 个更改文件",
+  "turnChangesRepositoryChangeCount_one": "{{count}} 项仓库变更",
+  "turnChangesRepositoryChangeCount_other": "{{count}} 项仓库变更",
+  "turnChangesAvailableChangeCount_one": "{{count}} 项可用变更",
+  "turnChangesAvailableChangeCount_other": "{{count}} 项可用变更",
   "turnChangesBinaryCount_one": "{{count}} 个二进制文件",
   "turnChangesBinaryCount_other": "{{count}} 个二进制文件",
   "turnChangesBinary": "二进制",
@@ -2900,5 +2904,9 @@
   "questionImageInvalid": "此图像已损坏或格式不受支持。",
   "questionImageTooLarge": "此图像超过预览大小限制。",
   "questionImageUnavailable": "图像不可用。您仍可回答问题。",
-  "questionImageRetry": "重试"
+  "questionImageRetry": "重试",
+  "turnChangesContentReasonTimeout": "保存此文件前内容保留已超时。",
+  "turnChangesContentReasonMissing": "执行器已不再保留此文件的内容。",
+  "turnChangesContentReasonInterrupted": "保存此文件前内容保留已停止。",
+  "turnChangesContentReasonSizeLimit": "此文件超出保留内容的大小限制。"
 }

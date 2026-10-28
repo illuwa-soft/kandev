@@ -2738,6 +2738,10 @@
   "workspaceFolderLiveLinkNotice": "フォルダーは元の場所へのリンクです。編集すると元のファイルが変更されます。エージェントのアクセス規則は引き続き適用されます。「フォルダーをアップロード」は別のコピーを作成します。",
   "turnChangesFileCount_one": "変更されたファイル {{count}} 件",
   "turnChangesFileCount_other": "変更されたファイル {{count}} 件",
+  "turnChangesRepositoryChangeCount_one": "リポジトリの変更 {{count}} 件",
+  "turnChangesRepositoryChangeCount_other": "リポジトリの変更 {{count}} 件",
+  "turnChangesAvailableChangeCount_one": "利用可能な変更 {{count}} 件",
+  "turnChangesAvailableChangeCount_other": "利用可能な変更 {{count}} 件",
   "turnChangesBinaryCount_one": "バイナリ {{count}} 件",
   "turnChangesBinaryCount_other": "バイナリ {{count}} 件",
   "turnChangesBinary": "バイナリ",
@@ -2900,5 +2904,9 @@
   "questionImageInvalid": "この画像は破損しているか、形式が対応していません。",
   "questionImageTooLarge": "この画像はプレビューのサイズ制限を超えています。",
   "questionImageUnavailable": "画像を表示できません。質問には引き続き回答できます。",
-  "questionImageRetry": "再試行"
+  "questionImageRetry": "再試行",
+  "turnChangesContentReasonTimeout": "このファイルを保存する前にコンテンツの保存がタイムアウトしました。",
+  "turnChangesContentReasonMissing": "実行環境にこのファイルのコンテンツが残っていません。",
+  "turnChangesContentReasonInterrupted": "このファイルを保存する前にコンテンツの保存が停止しました。",
+  "turnChangesContentReasonSizeLimit": "このファイルは保存されるコンテンツのサイズ上限を超えています。"
 }

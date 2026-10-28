@@ -22,6 +22,11 @@ Deliver an immutable repository interval beneath each captured terminal turn, wi
 Implement policy and durable models first, then executor capture and retention, then lifecycle ordering, APIs, and UI.
 The feature is complete only after cross-executor qualification and measured performance evidence.
 
+The [history integrity fix package](../turn-change-history-integrity/plan.md)
+refines raw comparison, writer attribution, and export progress.
+Its work orders remain pending and require a separate implementation request.
+The results and qualification gaps below remain unchanged.
+
 Implementation is authorized for this task. Execute the work orders in dependency order,
 update the current work-order and manifest status after its checks pass, and record any
 acceptance gaps in the final report.

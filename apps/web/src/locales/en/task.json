@@ -2738,6 +2738,10 @@
   "workspaceFolderLiveLinkNotice": "Folders are live links. Edits change the original files. Agent access rules still apply. Upload folder creates a separate copy.",
   "turnChangesFileCount_one": "{{count}} changed file",
   "turnChangesFileCount_other": "{{count}} changed files",
+  "turnChangesRepositoryChangeCount_one": "{{count}} repository change",
+  "turnChangesRepositoryChangeCount_other": "{{count}} repository changes",
+  "turnChangesAvailableChangeCount_one": "{{count}} available change",
+  "turnChangesAvailableChangeCount_other": "{{count}} available changes",
   "turnChangesBinaryCount_one": "{{count}} binary file",
   "turnChangesBinaryCount_other": "{{count}} binary files",
   "turnChangesBinary": "Binary",
@@ -2900,5 +2904,9 @@
   "questionImageInvalid": "This image is damaged or has an unsupported format.",
   "questionImageTooLarge": "This image exceeds the preview size limit.",
   "questionImageUnavailable": "Image unavailable. You can still answer the question.",
-  "questionImageRetry": "Retry"
+  "questionImageRetry": "Retry",
+  "turnChangesContentReasonTimeout": "Content preservation timed out before this file was saved.",
+  "turnChangesContentReasonMissing": "The executor no longer has this file's content.",
+  "turnChangesContentReasonInterrupted": "Content preservation stopped before this file was saved.",
+  "turnChangesContentReasonSizeLimit": "This file exceeds the retained content size limit."
 }
