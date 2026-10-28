@@ -737,3 +737,103 @@ handoff. Publish using the captured remote-OID lease
 `fd8bb59aaa4589fc99926b66367fa48ef3b4464a`. The next replay boundary is
 `74069f8b52326eb09180846b6fd3f42503017413`. No CI monitoring, review handling,
 merge, sibling edits, new agents, or main-runtime changes were performed.
+
+
+## Assignment descendant merge integration: 2026-10-28
+
+Independently verified assignment remote
+`6f15a8dca3ffc4d512dcd75fd04545ae2134b25c`, PR #4760 OPEN/READY on main,
+not merged. Exclusions began clean at
+`359158d447267dc640975899881625a5530d878f`. The actual shared ancestor remains
+`74069f8b52326eb09180846b6fd3f42503017413`.
+
+Saved `backup/exclusions-before-assignment-merge-20261028` at the previous
+exclusions head. Assignment advanced by a normal merge, so integrated the verified
+head with a merge and retained every existing exclusions commit ID. No upstream
+commits were replayed and no published history was rewritten. The next integrated
+assignment boundary is `6f15a8dca3ffc4d512dcd75fd04545ae2134b25c`.
+
+Automatic integration had no conflicts. Overlap was limited to the settings schema,
+eight task-locale catalogs, and public agent documentation. The settings schema
+retains the exclusion table/index alongside upstream Copilot profile persistence.
+Inherited CAS sort-clone comparison, internal/public replacement distinction,
+exclusion omission/revision semantics, and shared editor guards are unchanged.
+Session exclusion controls are unchanged, so existing screenshots remain applicable.
+New upstream public sections coexist with the exclusion recovery instructions.
+
+Affected verification on the integrated tree:
+
+- Eleven focused frontend suites passed, 87 tests. Upstream changed task-route
+  tests; the same selected suite paths were run. Exclusion/shared-editor coverage
+  remains present.
+- Real PostgreSQL 17.11 UTF-8 tests passed under race: numeric ICU membership,
+  concurrent assignment/exclusion writers, conditional repository/session writes,
+  resolution snapshots, import/deletion and confirmed deletion. Log:
+  `/tmp/exclusions-20261028-postgres.log`.
+- Documentation catalog (413 decisions, 1791 specifications), full spec lint,
+  54 published pages and all 63 public-doc validator tests passed.
+- Go race checks passed in mcpconfig, settings store, settings handlers,
+  backendapp and lifecycle with `-run 'MCP|Selection|Effective' -count=1`.
+  This includes exclusion idle acceptance/failure and internal/public selection
+  eligibility. Log: `/tmp/exclusions-20261028-go.log`.
+- Full web typecheck and translation validation passed; pseudo stays synchronized
+  and all six real locales are complete (4187 guarded source files checked).
+- Fresh managed build: 21 desktop cases passed without retries, log
+  `/tmp/kandev-run.e2e.lGkewyxG.log`. Same build: 17 phone cases passed without
+  retries, log `/tmp/kandev-run.e2e.VBvilgDm.log`. Runs were sequential with one
+  worker; included exclusions/restore, pending truth, assignment navigation,
+  origins, narrow fine-pointer and coarse-pointer controls.
+
+Only this own verification record was added to the automatic merge tree. Final
+merge SHA/parents, normal hook receipt and remote/PR identity are recorded in the
+saved task plan and coordinator handoff. PR #4761 remains draft on assignment.
+No CI monitoring, review handling, PR merge, sibling edits, new agents, or main
+runtime changes were performed.
+
+
+## Ready review and main rebase: 2026-10-28
+
+The user explicitly requested ready status, CI/comment remediation and conflict
+resolution by rebase. This supersedes the earlier draft/no-review checkpoint.
+PR #4761 was marked ready. Assignment #4760 merged as
+`4222c3654f9bb1efd1a7d27b5151c4b4c4f1ffd2`; GitHub retargeted this PR to main.
+Current main at rebase was `d17d84a8084b15ddf1df10ff465a51d27c780e64`.
+
+Backup `backup/exclusions-before-main-fixup-20261028` preserves
+`8a71af4c2bbc169a3b326e5d484e93fec7e754d5`. Replayed only eight own non-merge
+commits after the integrated assignment boundary
+`6f15a8dca3ffc4d512dcd75fd04545ae2134b25c` onto main. The previous merge's
+verified remerge delta contained only this plan's 52-line verification record;
+restored that record byte-for-byte after rebase. No upstream assignment history
+was replayed. Rebase completed without file conflicts. MCP writer/resolver and
+session exclusion source remain byte-identical to the previous head.
+
+Initial exact-head snapshot had no actionable review comments or failed checks;
+required checks were missing while the PR conflicted. Fresh CI and review
+verification is pending the rebased publication. No PR merge is authorized.
+
+
+Local verification for the ready-review rebase:
+
+- All five affected Go race packages passed: MCP resolution, settings store,
+  settings handlers, backend application wiring and runtime lifecycle.
+- All 64 focused frontend cases passed; full typecheck and translation checks
+  passed (4198 guarded files). Catalog/spec and public-doc validation passed.
+- Fresh managed build: 21 desktop cases passed without retries, recorded in
+  `/tmp/kandev-run.e2e.lyCI56oY.log`.
+- The phone run passed 16 cases and failed the pending-state case with a missing
+  `mcp_state` in the intercepted response and shutdown HTTP 503 evidence. The
+  initial failure is retained in `/tmp/kandev-run.e2e.hvuUoHcn.log`. No product
+  cause was established. That single case then passed in a fresh traced run
+  (`/tmp/kandev-run.e2e.h38yuPfm.log`) and two further fresh-worker repetitions
+  (`/tmp/kandev-run.e2e.vTDln1M9.log`), all with retries disabled. No source or
+  timeout change was made to obtain those results.
+- Main subsequently advanced to `aa229b60dd9281043f7638767777222f5723f710`.
+  Its only added change is database-maintenance JSON output (#4903), with no
+  overlap in MCP source, browser source, fixtures or dependencies. Backed up
+  the first rebased tip at `backup/exclusions-before-main-aa229-20261028`,
+  preserved this uncommitted record as a patch, and replayed the same eight
+  owned commits without conflicts. The final tree differs from the tested tree
+  only in those upstream maintenance files. Focused backend/frontend checks
+  passed again on the final tree (three Go race packages and all 64 frontend
+  cases); GitHub CI and reviewer findings remain pending.
