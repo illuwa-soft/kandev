@@ -2902,6 +2902,7 @@
   "mcpReasonInvalidTransport": "This server's transport configuration could not be resolved.",
   "mcpReasonDefinitionDisabled": "This MCP server is disabled in the workspace.",
   "mcpReasonDefinitionMissing": "This MCP server definition is no longer available.",
+  "mcpReasonSessionExcluded": "Excluded from this session",
   "mcpReasonSecretResolution": "Required credentials could not be resolved.",
   "mcpTaskSelectionInfo": "Choose extra MCP servers for this task. Servers selected in its agent profile or repositories are included automatically.",
   "deleteKeepFilesOption": "Keep workspace files",
@@ -3022,6 +3023,5 @@
   "storageRecoveryDiskTitle": "Session interrupted by low disk space",
   "storageAdvisoryPressureGuidanceOversized": "New output is blocked because it exceeded the delivery size limit. Start a new turn with smaller output.",
   "storageAdvisoryPressureGuidanceLimit": "New output is blocked by a configured delivery limit. Inspect retained output and delivery progress before resuming.",
-  "storageAdvisoryPressureGuidanceWriteFailed": "New output is blocked by a storage write failure. Inspect runtime storage before resuming.",
-  "mcpReasonSessionExcluded": "Excluded from this session"
+  "storageAdvisoryPressureGuidanceWriteFailed": "New output is blocked by a storage write failure. Inspect runtime storage before resuming."
 }

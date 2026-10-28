@@ -2902,6 +2902,7 @@
   "mcpReasonInvalidTransport": "无法解析此服务器的传输配置。",
   "mcpReasonDefinitionDisabled": "此 MCP 服务器已在工作区中禁用。",
   "mcpReasonDefinitionMissing": "此 MCP 服务器定义已不可用。",
+  "mcpReasonSessionExcluded": "已从此会话排除",
   "mcpReasonSecretResolution": "无法解析所需的凭据。",
   "mcpTaskSelectionInfo": "为此任务选择额外的 MCP 服务器。代理配置或仓库中已选择的服务器会自动包含在内。",
   "deleteKeepFilesOption": "保留工作区文件",
@@ -3022,6 +3023,5 @@
   "storageRecoveryDiskTitle": "会话因磁盘空间不足而中断",
   "storageAdvisoryPressureGuidanceOversized": "新输出已被阻塞，因为它超过了交付大小限制。请使用更小的输出开始新的回合。",
   "storageAdvisoryPressureGuidanceLimit": "新输出已被配置的交付限制阻塞。恢复前请检查保留的输出和交付进度。",
-  "storageAdvisoryPressureGuidanceWriteFailed": "新输出已被存储写入失败阻塞。恢复前请检查运行时存储。",
-  "mcpReasonSessionExcluded": "已从此会话排除"
+  "storageAdvisoryPressureGuidanceWriteFailed": "新输出已被存储写入失败阻塞。恢复前请检查运行时存储。"
 }

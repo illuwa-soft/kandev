@@ -1015,3 +1015,26 @@ resolved that environment issue before the recorded test runs.
 
 No product behavior or public documentation changed. Current-main integration
 and the next exact-head CI/review cycle remain required before delivery.
+
+
+### Translation conflicts after main advanced (2026-10-28)
+
+Main advanced again while CI ran. Rebased the 17 owned commits after
+`2863069ed7251f5da73ad6be1411be6a79d2914c` onto
+`a33ff4139ada169271a8177fa181c45b0c0176e7`. Backup
+`backup/exclusions-before-main-a33ff-20261028` preserves the published
+`fe1e2b0ecc9ae496434adf064eab70ab0b6b4d3f`. Only the eight task catalogs
+conflicted. Duplicate-key-aware three-way comparison found no conflicting
+values; each resolved catalog is the exact semantic union of both inputs.
+The exclusion reason is now beside the existing MCP reason keys, avoiding
+repeated end-of-file conflicts with unrelated catalog additions. Values are
+unchanged. No source or test logic changed in this integration.
+
+Validation passed: 73 focused frontend cases; full typecheck and i18n checks;
+five affected backend race packages covering MCP, selection, effective state,
+runtime storage and prompt suggestions; two desktop and two phone MCP journeys
+with retries disabled (`/tmp/kandev-run.e2e.5HHH6XQU.log` and
+`/tmp/kandev-run.e2e.csEcdP5m.log`); harness/spec tests and lint; conflict-file
+normal hooks and Prettier. Public feature docs and screenshots remain accurate.
+Fresh published-head CI/review remains required; prior-head progress is
+historical and is tracked externally.

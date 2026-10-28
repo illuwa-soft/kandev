@@ -2902,6 +2902,7 @@
   "mcpReasonInvalidTransport": "このサーバーの転送設定を解決できませんでした。",
   "mcpReasonDefinitionDisabled": "この MCP サーバーはワークスペースで無効になっています。",
   "mcpReasonDefinitionMissing": "この MCP サーバーの定義は利用できなくなりました。",
+  "mcpReasonSessionExcluded": "このセッションから除外されています",
   "mcpReasonSecretResolution": "必要な認証情報を解決できませんでした。",
   "mcpTaskSelectionInfo": "このタスクに追加する MCP サーバーを選択します。エージェントプロファイルやリポジトリで選択済みのサーバーは自動的に含まれます。",
   "deleteKeepFilesOption": "ワークスペースのファイルを保持",
@@ -3022,6 +3023,5 @@
   "storageRecoveryDiskTitle": "ディスク容量不足によりセッションが中断されました",
   "storageAdvisoryPressureGuidanceOversized": "出力が配信サイズの上限を超えたため、新しい出力がブロックされています。より小さな出力で新しいターンを開始してください。",
   "storageAdvisoryPressureGuidanceLimit": "設定された配信上限により新しい出力がブロックされています。再開する前に保持された出力と配信の進行状況を確認してください。",
-  "storageAdvisoryPressureGuidanceWriteFailed": "ストレージの書き込み失敗により新しい出力がブロックされています。再開する前にランタイムのストレージを確認してください。",
-  "mcpReasonSessionExcluded": "このセッションから除外されています"
+  "storageAdvisoryPressureGuidanceWriteFailed": "ストレージの書き込み失敗により新しい出力がブロックされています。再開する前にランタイムのストレージを確認してください。"
 }

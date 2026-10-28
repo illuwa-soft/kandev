@@ -2902,6 +2902,7 @@
   "mcpReasonInvalidTransport": "無法解析此伺服器的傳輸設定。",
   "mcpReasonDefinitionDisabled": "此 MCP 伺服器已在工作區中停用。",
   "mcpReasonDefinitionMissing": "此 MCP 伺服器定義已不可用。",
+  "mcpReasonSessionExcluded": "已從此工作階段排除",
   "mcpReasonSecretResolution": "無法解析所需的認證資訊。",
   "mcpTaskSelectionInfo": "為此任務選擇額外的 MCP 伺服器。代理設定或儲存庫中已選擇的伺服器會自動包含在內。",
   "deleteKeepFilesOption": "保留工作區檔案",
@@ -3022,6 +3023,5 @@
   "storageRecoveryDiskTitle": "工作階段因磁碟空間不足而中斷",
   "storageAdvisoryPressureGuidanceOversized": "新輸出已被阻塞，因為它超過了交付大小限制。請使用更小的輸出開始新的回合。",
   "storageAdvisoryPressureGuidanceLimit": "新輸出已被設定的交付限制阻塞。恢復前請檢查保留的輸出和交付進度。",
-  "storageAdvisoryPressureGuidanceWriteFailed": "新輸出已被儲存寫入失敗阻塞。恢復前請檢查執行時儲存。",
-  "mcpReasonSessionExcluded": "已從此工作階段排除"
+  "storageAdvisoryPressureGuidanceWriteFailed": "新輸出已被儲存寫入失敗阻塞。恢復前請檢查執行時儲存。"
 }
