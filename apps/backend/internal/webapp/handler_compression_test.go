@@ -44,6 +44,7 @@ func TestAssetCompressionNegotiation(t *testing.T) {
 		{"GZip;Q=1", true, 200}, {"notgzip", false, 200}, {"gzip;q=0", false, 200},
 		{"gzip;q=0.5, identity;q=0.8", false, 200}, {"gzip;q=0.8, identity;q=0.5", true, 200},
 		{"gzip;q=0.5, identity;q=0.5", true, 200}, {"*;q=1", true, 200},
+		{"gzip;q=0.8, *;q=0.1", false, 200},
 		{"gzip;q=0, *;q=1", false, 200}, {"*;q=0", false, 406},
 		{"identity;q=0, gzip;q=0", false, 406}, {"identity;q=0, gzip;q=1", true, 200},
 		{"gzip;q=bogus", false, 200}, {"gzip;q=2, identity;q=0", false, 406},
@@ -106,6 +107,7 @@ func TestCompressedAssetHTTPBehavior(t *testing.T) {
 			}{
 				{http.MethodHead, "", "", 200, nil},
 				{http.MethodGet, "Range", "bytes=0-9", 206, compressed[:10]},
+				{http.MethodGet, "Range", "bytes=0-9,20-29", 200, compressed},
 				{http.MethodGet, "Range", "bytes=99999-", 416, nil},
 				{http.MethodGet, "If-Modified-Since", "Fri, 02 Jan 2026 03:04:05 GMT", 304, nil},
 			} {
@@ -117,6 +119,7 @@ func TestCompressedAssetHTTPBehavior(t *testing.T) {
 					}
 					response := httptest.NewRecorder()
 					handler.ServeHTTP(response, request)
+					require.Equal(t, item.value, request.Header.Get(item.header))
 					require.Equal(t, item.status, response.Code)
 					if item.status == 416 {
 						require.Empty(t, response.Header().Get("Content-Encoding"))
@@ -138,12 +141,15 @@ func TestCompressedAssetHTTPBehavior(t *testing.T) {
 func TestAssetCompressionFallbackAndShell(t *testing.T) {
 	assets, original, _ := compressedAssetFixture(t)
 	delete(assets, "assets/app.js.gz")
+	assets["assets/font.woff2"] = &fstest.MapFile{Data: original}
 	handler := NewHandler(assets)
 	for _, item := range []struct {
 		target, encoding string
 		status           int
 	}{
 		{"/assets/app.js", "gzip", 200}, {"/assets/app.js", "identity;q=0, gzip", 406},
+		{"/assets/font.woff2", "gzip", 200}, {"/assets/font.woff2", "identity;q=0", 406},
+		{"/assets/font.woff2", "*;q=0", 406},
 		{"/assets/missing.js", "gzip", 404}, {"/threads", "gzip", 200},
 	} {
 		t.Run(item.target+item.encoding, func(t *testing.T) {

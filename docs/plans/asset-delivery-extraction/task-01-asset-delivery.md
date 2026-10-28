@@ -119,6 +119,14 @@ webapp package also passes after that sync.
 Scoped Go/web lint, specification catalog validation, and specification lint
 pass. Commit hooks and remote CI/review results remain delivery evidence.
 
+PR review exposed a multipart-range response that retained `Content-Encoding:
+gzip` on an unencoded multipart envelope. A two-range regression fails on both
+seekable and non-seekable sources before the fix. Gzip multi-range requests now
+receive the complete compressed representation without mutating the request.
+The webapp package and scoped Go lint pass. Added negotiation cases preserve
+implicit identity preference and reject explicitly excluded identity responses
+for assets without a compressed representation, including fonts.
+
 ## Documentation impact
 
 Public docs need no change: compression and deferred imports require no new

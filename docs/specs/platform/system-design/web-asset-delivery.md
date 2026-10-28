@@ -49,9 +49,12 @@ and the selected file for length, modification time, and response bytes. Set
 immutable asset caching. Do not add content hashes at request time.
 
 Reuse `http.ServeContent` over the selected representation. Range offsets and
-HEAD lengths refer to that representation. Test the Go version's actual
-conditional and range behavior, including 304 and 416; do not leave an encoding
-header on an unencoded error body. Do not add a strong ETag shared by identity
+HEAD lengths refer to that representation.
+For gzip assets, ignore multiple ranges and send the complete representation;
+a multipart envelope cannot carry the asset's gzip content encoding.
+Test the Go version's actual conditional and range behavior, including 304 and
+416; do not leave an encoding header on an unencoded error body. Do not add a
+strong ETag shared by identity
 and gzip. If a validator is introduced, it must identify the representation.
 The existing non-seekable filesystem path needs the same representation rules.
 

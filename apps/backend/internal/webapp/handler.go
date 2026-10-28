@@ -144,6 +144,11 @@ func (h *Handler) serveAsset(w http.ResponseWriter, r *http.Request) bool {
 		seeker = bytes.NewReader(data)
 	}
 	w.Header().Set("Content-Length", strconv.FormatInt(stat.Size(), 10))
+	if w.Header().Get("Content-Encoding") == "gzip" && strings.Contains(r.Header.Get("Range"), ",") {
+		// A multipart range envelope cannot carry the asset's gzip content encoding.
+		r = r.Clone(r.Context())
+		r.Header.Del("Range")
+	}
 	http.ServeContent(assetResponseWriter{w}, r, name, stat.ModTime(), seeker)
 	return true
 }
