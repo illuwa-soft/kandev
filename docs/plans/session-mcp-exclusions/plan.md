@@ -909,3 +909,48 @@ documentation changed. Both desktop/tablet cases passed
 (`/tmp/kandev-run.e2e.hrUojzhD.log`), and all three phone widths passed
 (`/tmp/kandev-run.e2e.bUbQwn2u.log`), with retries disabled. Changed-file ESLint
 and Prettier passed. New-head CI remains pending publication.
+
+### CI retry audit and rebase onto the plugin SDK merge
+
+Backed up local `bc562858dbd6cd19fc39506903cdce9cc146587a` at
+`backup/exclusions-before-main-3a740-20261028`, then replayed the thirteen
+owned commits after `91a20b1373c567ad7b138d6d509fc18d80d3a3a6` onto
+main `3a740c6911a340e73ade7edad6f4b234035f2fc9`. The rebase was clean;
+all thirteen patches are identical by range-diff. This consumes main's
+scroll-settlement correction for the mobile Threads fixture and preserves its
+causal MCP response/reload helper. Dependency installation completed normally.
+
+The complete available browser blobs for published `c92eae774` contained five
+failed MCP cases (desktop, tablet and three phone widths), all from the stale
+failed-application assertion corrected above. All twelve phone error contexts
+matched the same cause. Three other cases passed only after retry: mobile
+Threads (fixed upstream), Quick Chat recovery, and LSP hover.
+
+Quick Chat's failure artifact showed that the synthetic failed session resumed
+and became resolved. A local fixture invariant reproduced the defect: the
+supposed bootstrap failure still had a live mock runtime (expected false,
+received true; `/tmp/kandev-run.e2e.45XDN34U.log`). The fixture now stops that
+runtime and confirms it stopped before seeding the failure. It disables
+open-time automatic restart for this explicit-recovery case and restores the
+original setting in `finally`. All four setup-recovery cases pass without
+retries (`/tmp/kandev-run.e2e.gaYqMudA.log`). No product recovery behavior changed.
+
+The LSP hover failure did not reproduce in isolation or after its five preceding
+cases on two CPU cores: six cases passed without retries
+(`/tmp/kandev-run.e2e.4NmXFtXq.log`). Its screenshot and protocol assertion were
+inspected; no speculative LSP change was made. Fresh CI remains required.
+The PostgreSQL protected-sweep failure also did not reproduce in five race runs
+each on PostgreSQL 16 and 17; one failed-job rerun is in progress. Neither local
+passes nor pending reruns are treated as a clean CI result.
+
+The rebased production tree is byte-identical to validated synthetic merge
+`57465eaf3384c81a25457c9b96ea97f8aa580b6b`: only test/documentation corrections
+differ. That tree passed five affected backend race packages and desktop/phone
+MCP recovery. On the actual rebased branch all 73 focused frontend/capture cases
+pass again. Public docs and screenshots remain accurate because these changes
+only correct fixtures and consume upstream work.
+
+Full frontend typecheck, changed fixture ESLint/Prettier, documentation catalog
+validation and specification lint also passed on the rebased branch. The existing
+public feature/recovery documentation and screenshots need no change for this
+fixture-only correction.
