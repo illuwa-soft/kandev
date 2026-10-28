@@ -136,10 +136,10 @@ type ProfileProbeContext struct {
 	CLIFlags               []string
 	CommandPrefix          []string
 	CopilotSelectedPlugins []string
-	SandboxSelection *policy.SelectionContext `json:"-"`
-	ProfileID        string
-	ExecutorID       string
-	SandboxDigest    string
+	SandboxSelection       *policy.SelectionContext `json:"-"`
+	ProfileID              string
+	ExecutorID             string
+	SandboxDigest          string
 }
 
 type ProfileCapabilityRequest struct {

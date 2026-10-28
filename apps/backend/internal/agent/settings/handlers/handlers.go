@@ -684,7 +684,7 @@ type commandPreviewRequest struct {
 	CLIFlags               []dto.CLIFlagDTO `json:"cli_flags"`
 	CommandPrefix          string           `json:"command_prefix,omitempty"`
 	CopilotSelectedPlugins []string         `json:"copilot_selected_plugins,omitempty"`
-	SafeOnly           bool             `json:"safe_only"`
+	SafeOnly               bool             `json:"safe_only"`
 }
 
 func (h *Handlers) httpPreviewAgentCommand(c *gin.Context) {
@@ -707,7 +707,7 @@ func (h *Handlers) httpPreviewAgentCommand(c *gin.Context) {
 		CLIFlags:               body.CLIFlags,
 		CommandPrefix:          body.CommandPrefix,
 		CopilotSelectedPlugins: body.CopilotSelectedPlugins,
-		SafeOnly:           body.SafeOnly,
+		SafeOnly:               body.SafeOnly,
 	})
 	if err != nil {
 		if errors.Is(err, controller.ErrInvalidCommandPrefix) {
