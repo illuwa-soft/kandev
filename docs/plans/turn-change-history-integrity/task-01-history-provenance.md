@@ -118,3 +118,7 @@ sequential
 ## Results
 
 Implemented versioned checkpoint provenance (`version 2`) with real HEAD, symbolic ref, configured target identity/commit, unique merge base, operation state, and tree-merge capability. Provenance is embedded in the immutable checkpoint body, observed HEAD/target commits become source parents, retries parse the accepted body, raced captures are rejected, and provenance is persisted through additive SQLite/PostgreSQL-compatible columns. Legacy terminal rows are labelled `legacy_raw` without rewriting endpoints. Verified with real-Git provenance/retry tests and migration replay tests.
+
+### Fixup remediation (2026-10-28)
+
+Capture now reads provenance before preparing the snapshot and verifies it after the snapshot is written. A `post-index-change` test hook moves `HEAD` during preparation and requires a provenance failure, so old working-tree content cannot be paired with new history.

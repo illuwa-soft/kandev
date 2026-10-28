@@ -376,6 +376,16 @@ Follow-up review remediation on 2026-10-28:
 - The new history specs reset the shared worker checkout before seeding so their untracked-file turns stay independent when files share one worker.
 - PostgreSQL upgrade, takeover, and receipt tests are present but skipped because `KANDEV_TEST_POSTGRES_DSN` is unset. No PostgreSQL pass is claimed.
 
+Fixup review remediation on 2026-10-28:
+
+- Capture provenance before preparing the snapshot so a concurrent rebase cannot pair old content with new history; the post-snapshot verification test moves `HEAD` from a `post-index-change` hook and requires rejection.
+- Treat only an unexpired export claim as live; an expired claim from an exhausted attempt now settles unavailable instead of repeating the loop.
+- Keep file-specific export failures on their entries and continue paging; the regression exports 30 files with one oversized file and verifies the remaining files stay ready.
+- Retry a saved synthetic selection once its repository settles; covered in the hook and mounted-viewer tests.
+- Stop and join the export processor through the application context so shutdown does not leave in-flight writes running.
+- Move the new history columns, dependent index, and backfill into `runMigrations`; upgrade and replay tests exercise the boot path.
+- Correct the companion `turn-changed-files` plan and Results notes so completed history-integrity work is not described as pending or proposed.
+
 A disposable real-Git feasibility probe passed during planning.
 It excluded 318 imported paths from a 319-path raw diff, retained the one turn
 file and a subsequent legitimate revert, preserved an unchanged dirty file,

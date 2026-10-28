@@ -142,3 +142,7 @@ sequential
 ## Results
 
 Implemented `export_batch_version = 1` with deterministic inventory fingerprints, bounded 25-entry pages, cursor continuation, and effective-pair validation. Added durable page receipts with claim tokens, takeover/late-response rejection, typed export reasons, per-page atomic content and cursor writes, cumulative turn byte admission, and a bound-capped processor with two concurrent attempts. Comparison summaries persist before content finishes; saved files remain readable and pending files use the existing loading state. Cleanup releases refs only after content settles.
+
+### Fixup remediation (2026-10-28)
+
+Expired exhausted claims now settle unavailable, and file-specific export failures stay on their entries so later files still save. The export processor has an idempotent stop that joins its in-flight pass. History columns, the dependent index, and the legacy backfill moved into `runMigrations` after their `ADD COLUMN` steps; the upgrade and replay tests exercise that boot path.

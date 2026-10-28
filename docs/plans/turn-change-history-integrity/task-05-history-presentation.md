@@ -259,3 +259,7 @@ Executed in this environment:
 - i18n keys/ratchet and public-doc/specification validation passed.
 
 The history specs reset the shared worker checkout before seeding so their untracked-file turns remain independent. Not executed: PostgreSQL-backed browser evidence (no `KANDEV_TEST_POSTGRES_DSN`). Mixed roots use an isolated retained-record fixture because the browser fixture has no two-healthy-repository capture.
+
+### Fixup remediation (2026-10-28)
+
+A synthetic selection now retries once when its repository finishes, so a saved late-page patch is not left in the unavailable state. The hook and mounted viewer tests cover the repository-settled transition.
