@@ -7,9 +7,40 @@ requirements:
   - REQ-UI-PERSISTENT-STATUS-MOTION-003
   - REQ-UI-PERSISTENT-STATUS-MOTION-004
   - REQ-UI-PERSISTENT-STATUS-MOTION-005
+  - REQ-UI-PERSISTENT-STATUS-MOTION-006
 ---
 
 # Persistent Status Motion System Design
+
+## Reduced-motion extension
+
+`REQ-UI-PERSISTENT-STATUS-MOTION-006` governs reduced-motion behavior.
+This section supersedes earlier preservation of each primitive's reduced-motion
+policy only for the host-owned persistent indicators in that requirement.
+
+Reuse `persistent-motion-visibility.tsx`, `CompositorSpin`, `CompositorPulse`,
+and `GridSpinner`. The shared visibility helper already exists; do not rebuild
+its document/intersection lifecycle. Keep no-preference timing, stagger, color,
+geometry, and labels. Suppress infinite motion when `matchMedia` reports reduce,
+including runtime preference changes. Set a deliberate static transform and
+opacity so a grid cell cannot stop at zero scale or a status at zero opacity.
+Scope equivalent CSS fallback rules to owned indicators. Do not scan and pause
+all document animations. Cancel or pause owned effects consistently and clean
+up preference listeners. A visible unfocused split pane remains eligible for
+normal motion. Hidden document, offscreen target, and hidden panel gates remain.
+
+The shared `@kandev/ui/spinner` also supplies persistent loading indicators on
+host-rendered plugin actions. Its CSS rotation uses `motion-reduce:animate-none`
+to keep the same visible SVG and accessible busy semantics under reduce. The
+media query responds to preference changes without another observer or listener.
+Normal rotation and the action's enabled state remain unchanged. The same rule
+also applies to bounded uses of this shared component.
+
+Component tests cover preference changes, fallback, active-state changes while
+hidden, and cleanup. Desktop and phone browser tests assert visible static
+status under reduce and the original visible motion under no-preference.
+Performance captures count running and paused animations separately; the
+number returned by `getAnimations()` is not an active-animation count.
 
 ## Purpose and boundaries
 
@@ -243,6 +274,15 @@ while hidden starts paused, including after a class or reduced-motion change.
 Cancel old handles before replacement. Disconnect observers and listeners on
 unmount. If observation is unavailable, assume intersection and retain document
 visibility gating. Preserve each primitive's existing reduced-motion policy.
+
+The legacy Threads status SVG uses this same helper directly for requirements
+004 and 006. It retains its current transform target while the separate 001
+HTML-target migration remains unresolved. The board passes geometric column
+visibility, independently of detail activation or preload eligibility. A known
+hidden owner pauses before paint and allocates no intersection observer. A
+visible owner also checks the icon's intersection. Unknown board geometry
+retains the intersection/document fallback. Retired observer callbacks cannot
+change current eligibility. This path adds no wrapper or animation engine.
 
 Domain updates and subscriptions continue while presentation motion pauses.
 Do not unmount editors, transcripts, terminals, or panels to pause an indicator.

@@ -2,7 +2,7 @@
 status: active
 system: ui
 created: 2026-08-23
-updated: 2026-09-10
+updated: 2026-10-28
 owners:
   - kandev
 ---
@@ -147,6 +147,27 @@ governs hidden targets.
 - **AC-UI-PERSISTENT-STATUS-MOTION-005.3:** Desktop and phone shall retain the
   same usage value, threshold colors, accessible disclosure, and touch behavior.
 
+### REQ-UI-PERSISTENT-STATUS-MOTION-006: Reduced persistent motion
+
+This requirement governs host-owned status indicators.
+It qualifies the visible-motion criteria in 001 through 003 when the user
+requests reduced motion. Their default visual behavior remains unchanged.
+
+**Intent:** Respect the operating system's reduced-motion preference across
+host-owned persistent status indicators.
+
+#### Acceptance criteria
+
+- **AC-UI-PERSISTENT-STATUS-MOTION-006.1:** While reduced motion is requested,
+  host-owned persistent rotation, grid, and pulse indicators shall show a
+  static, visible status with the same accessible meaning and geometry.
+- **AC-UI-PERSISTENT-STATUS-MOTION-006.2:** Changing the preference while the
+  page is open shall update both Web Animations and CSS fallback paths. Returning
+  to normal motion shall resume only currently active, visible indicators.
+- **AC-UI-PERSISTENT-STATUS-MOTION-006.3:** Repeated preference and visibility
+  changes shall preserve content, drafts, focus, scroll position, and status
+  updates on desktop and phone without accumulating animation handles.
+
 ## Implementation plans
 
 - [Idle CPU (completed)](../../../plans/frontend-idle-cpu/plan.md)
@@ -155,8 +176,8 @@ governs hidden targets.
 
 ## Out of scope
 
-- Removing visible status motion.
+- Removing default visible status motion when reduced motion is not requested.
 - Changing task, session, or run state rules.
-- Changing reduced-motion behavior.
+- Changing motion preferences beyond requirement 006.
 - Migrating one-shot entrance, selection, search, or confirmation cues.
 - Changing plugin-owned animations, including Kandy celebration effects.
