@@ -47,6 +47,8 @@ type ExportProcessor struct {
 	now         func() time.Time
 	mu          sync.Mutex
 	started     bool
+	cancel      context.CancelFunc
+	done        chan struct{}
 }
 
 func NewExportProcessor(repository repository.TurnChangesRepository, coordinator *Coordinator) *ExportProcessor {
@@ -89,9 +91,36 @@ func (p *ExportProcessor) Start(ctx context.Context) {
 		p.mu.Unlock()
 		return
 	}
-	p.started = true
+	runCtx, cancel := context.WithCancel(ctx)
+	done := make(chan struct{})
+	p.started, p.cancel, p.done = true, cancel, done
 	p.mu.Unlock()
-	go p.loop(ctx)
+	go func() {
+		defer close(done)
+		p.loop(runCtx)
+	}()
+}
+
+// Stop cancels the processor and waits for its in-flight pass to finish.
+// Repeated calls are safe and all callers wait for the same run to drain.
+func (p *ExportProcessor) Stop() {
+	if p == nil {
+		return
+	}
+	p.mu.Lock()
+	if !p.started {
+		p.mu.Unlock()
+		return
+	}
+	if p.cancel != nil {
+		p.cancel()
+		p.cancel = nil
+	}
+	done := p.done
+	p.mu.Unlock()
+	if done != nil {
+		<-done
+	}
 }
 
 func (p *ExportProcessor) loop(ctx context.Context) {

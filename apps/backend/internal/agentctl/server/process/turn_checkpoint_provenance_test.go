@@ -2,6 +2,7 @@ package process
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -451,4 +452,37 @@ func newSHA256TestRepo(t *testing.T) string {
 	runGit(t, repoDir, "add", "README.md")
 	runGit(t, repoDir, "commit", "-q", "-m", "base")
 	return repoDir
+}
+
+func TestTurnCheckpointCaptureRejectsHistoryMoveDuringSnapshot(t *testing.T) {
+	repoDir, cleanup := setupTestRepo(t)
+	t.Cleanup(cleanup)
+	runGit(t, repoDir, "checkout", "-q", "-b", "side")
+	writeFile(t, repoDir, "moved.txt", "moved\n")
+	runGit(t, repoDir, "add", "moved.txt")
+	runGit(t, repoDir, "commit", "-q", "-m", "move main during snapshot")
+	movedHead := strings.TrimSpace(runGit(t, repoDir, "rev-parse", "HEAD"))
+	runGit(t, repoDir, "checkout", "-q", "main")
+
+	hookDir := t.TempDir()
+	marker := filepath.Join(repoDir, ".git", "snapshot-hook-fired")
+	hook := fmt.Sprintf("#!/bin/sh\nif [ -f %q ]; then exit 0; fi\n: > %q\ngit -C %q update-ref refs/heads/main %s\n",
+		marker, marker, repoDir, movedHead)
+	if err := os.WriteFile(filepath.Join(hookDir, "post-index-change"), []byte(hook), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	runGit(t, repoDir, "config", "core.hooksPath", hookDir)
+	t.Cleanup(func() { runGit(t, repoDir, "config", "core.hooksPath", "/dev/null") })
+
+	operator := NewGitOperator(repoDir, newTestLogger(t), nil)
+	changeSetID, checkoutID := uuid.NewString(), uuid.NewString()
+	_, err := operator.CaptureTurnCheckpoint(context.Background(), turnchanges.CheckpointRequest{
+		ChangeSetID: changeSetID, CheckoutID: checkoutID, Boundary: turnchanges.CheckpointStart,
+	})
+	if err == nil || !strings.Contains(err.Error(), "history_provenance_unavailable") {
+		t.Fatalf("capture with moving history = %v, want history_provenance_unavailable", err)
+	}
+	if refs := strings.TrimSpace(runGit(t, repoDir, "show-ref")); strings.Contains(refs, changeSetID) {
+		t.Fatalf("failed capture retained a checkpoint ref: %s", refs)
+	}
 }

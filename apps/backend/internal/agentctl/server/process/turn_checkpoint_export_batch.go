@@ -126,15 +126,14 @@ func (g *GitOperator) exportTurnCheckpointPage(
 			return *export
 		}
 		file := files[index]
-		item, itemBytes, complete := g.exportTurnCheckpointFile(pageCtx, view, startTreeOID, file, budget-export.ExportBytes)
+		item, itemBytes, _ := g.exportTurnCheckpointFile(pageCtx, view, startTreeOID, file, budget-export.ExportBytes)
 		if pageCtx.Err() != nil || ctx.Err() != nil {
 			markTurnCheckpointExportIncomplete(export, turnchanges.ReasonExportTimeout)
 			export.NextCursor = index
 			return *export
 		}
-		if !complete {
-			markTurnCheckpointExportIncomplete(export, item.Reason)
-		}
+		// A file-specific failure stays on its entry so later files still
+		// export; only page-wide timeout or total-budget exhaustion is fatal.
 		export.ExportBytes += itemBytes
 		export.Files = append(export.Files, item)
 		cursor = index + 1

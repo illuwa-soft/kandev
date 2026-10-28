@@ -24,8 +24,9 @@ The feature is complete only after cross-executor qualification and measured per
 
 The [history integrity fix package](../turn-change-history-integrity/plan.md)
 refines raw comparison, writer attribution, and export progress.
-Its work orders remain pending and require a separate implementation request.
-The results and qualification gaps below remain unchanged.
+Its five work orders are done; implementation results and environment-only
+verification gaps are recorded in that plan. The results and qualification
+gaps below remain unchanged.
 
 Implementation is authorized for this task. Execute the work orders in dependency order,
 update the current work-order and manifest status after its checks pass, and record any

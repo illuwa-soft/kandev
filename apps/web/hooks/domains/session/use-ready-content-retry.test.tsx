@@ -5,7 +5,10 @@ import { useReadyContentRetry } from "./use-ready-content-retry";
 
 const notStoredError = new Error("not stored");
 
-function file(availability: TurnFileChange["content_availability"]): TurnFileChange {
+function file(
+  availability: TurnFileChange["content_availability"],
+  synthetic = false,
+): TurnFileChange {
   return {
     id: "file-1",
     repository_change_id: "repo-1",
@@ -13,55 +16,116 @@ function file(availability: TurnFileChange["content_availability"]): TurnFileCha
     path: "src/main.ts",
     kind: "modified",
     content_availability: availability,
+    synthetic,
   };
 }
 
+type RetryProps = {
+  selected: TurnFileChange;
+  whitespace: boolean;
+  error: unknown;
+  loading: boolean;
+  repositorySettled: boolean;
+};
+
+function useRetry(props: RetryProps, retry: () => void) {
+  return useReadyContentRetry({
+    selectedFile: props.selected,
+    contentError: props.error,
+    contentLoading: props.loading,
+    whitespace: props.whitespace,
+    repositorySettled: props.repositorySettled,
+    retry,
+  });
+}
+
 describe("useReadyContentRetry", () => {
-  it("does not spend the readiness retry on a synthetic pending placeholder", () => {
+  it("retries a synthetic pending placeholder once its repository settles", () => {
     const retry = vi.fn();
-    const { rerender } = renderHook(
-      ({ selected, whitespace, error, loading }) =>
-        useReadyContentRetry(selected, error, loading, whitespace, retry),
-      {
-        initialProps: {
-          selected: file("pending"),
-          whitespace: false,
-          error: notStoredError as unknown,
-          loading: false,
-        },
+    const { rerender } = renderHook((props: RetryProps) => useRetry(props, retry), {
+      initialProps: {
+        selected: file("pending", true),
+        whitespace: false,
+        error: notStoredError,
+        loading: false,
+        repositorySettled: false,
       },
-    );
+    });
     expect(retry).not.toHaveBeenCalled();
 
-    rerender({ selected: file("ready"), whitespace: false, error: notStoredError, loading: false });
+    rerender({
+      selected: file("pending", true),
+      whitespace: false,
+      error: notStoredError,
+      loading: false,
+      repositorySettled: true,
+    });
     expect(retry).toHaveBeenCalledTimes(1);
-    rerender({ selected: file("ready"), whitespace: false, error: notStoredError, loading: false });
+    rerender({
+      selected: file("pending", true),
+      whitespace: false,
+      error: notStoredError,
+      loading: false,
+      repositorySettled: true,
+    });
     expect(retry).toHaveBeenCalledTimes(1);
-    rerender({ selected: file("ready"), whitespace: true, error: notStoredError, loading: false });
+  });
+
+  it("keeps the readiness retry for a canonical ready file", () => {
+    const retry = vi.fn();
+    const { rerender } = renderHook((props: RetryProps) => useRetry(props, retry), {
+      initialProps: {
+        selected: file("ready"),
+        whitespace: false,
+        error: notStoredError,
+        loading: false,
+        repositorySettled: false,
+      },
+    });
+    expect(retry).toHaveBeenCalledTimes(1);
+    rerender({
+      selected: file("ready"),
+      whitespace: false,
+      error: notStoredError,
+      loading: false,
+      repositorySettled: false,
+    });
+    expect(retry).toHaveBeenCalledTimes(1);
+    rerender({
+      selected: file("ready"),
+      whitespace: true,
+      error: notStoredError,
+      loading: false,
+      repositorySettled: false,
+    });
     expect(retry).toHaveBeenCalledTimes(2);
   });
 
   it("ignores loading, unavailable, and error-free states", () => {
     const retry = vi.fn();
-    const { rerender } = renderHook(
-      ({ selected, whitespace, error, loading }) =>
-        useReadyContentRetry(selected, error, loading, whitespace, retry),
-      {
-        initialProps: {
-          selected: file("ready"),
-          whitespace: false,
-          error: new Error("loading") as unknown,
-          loading: true,
-        },
+    const { rerender } = renderHook((props: RetryProps) => useRetry(props, retry), {
+      initialProps: {
+        selected: file("ready"),
+        whitespace: false,
+        error: new Error("loading") as unknown,
+        loading: true,
+        repositorySettled: true,
       },
-    );
+    });
     expect(retry).not.toHaveBeenCalled();
-    rerender({ selected: file("ready"), whitespace: false, error: null, loading: false });
+    rerender({
+      selected: file("ready"),
+      whitespace: false,
+      error: null,
+      loading: false,
+      repositorySettled: true,
+    });
     rerender({
       selected: file("unavailable"),
       whitespace: false,
       error: new Error("gone"),
       loading: false,
+      repositorySettled: true,
     });
     expect(retry).not.toHaveBeenCalled();
   });

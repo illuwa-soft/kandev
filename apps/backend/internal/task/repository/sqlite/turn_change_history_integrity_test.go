@@ -196,6 +196,9 @@ func TestTurnChangeProvenanceMigrationReplayLabelsLegacyOnce(t *testing.T) {
 	if err := repo.initTurnChangesSchema(); err != nil {
 		t.Fatalf("replay schema: %v", err)
 	}
+	if err := repo.migrateTurnChangeHistorySchema(); err != nil {
+		t.Fatalf("replay history migration: %v", err)
+	}
 	row, err := repo.GetTurnRepositoryChange(ctx, changeSetID, repositoryChangeID)
 	if err != nil {
 		t.Fatal(err)
@@ -209,6 +212,9 @@ func TestTurnChangeProvenanceMigrationReplayLabelsLegacyOnce(t *testing.T) {
 	}
 	if err := repo.initTurnChangesSchema(); err != nil {
 		t.Fatalf("second replay: %v", err)
+	}
+	if err := repo.migrateTurnChangeHistorySchema(); err != nil {
+		t.Fatalf("second replay history migration: %v", err)
 	}
 	replayed, err := repo.GetTurnRepositoryChange(ctx, changeSetID, repositoryChangeID)
 	if err != nil || replayed.ComparisonBasis != turnchanges.ComparisonLegacyRaw {
@@ -291,7 +297,7 @@ func TestTurnChangeUpgradeAddsHistoryColumnsBeforeExportIndex(t *testing.T) {
 			t.Fatalf("drop legacy column %s: %v", column, err)
 		}
 	}
-	if err := repo.initTurnChangesSchema(); err != nil {
+	if err := repo.runMigrations(ctx); err != nil {
 		t.Fatalf("upgrade schema: %v", err)
 	}
 	upgraded := repo
@@ -579,7 +585,7 @@ func TestPostgresTurnChangeUpgradeAddsHistoryColumnsBeforeExportIndex(t *testing
 			t.Fatalf("drop postgres column %s: %v", column, err)
 		}
 	}
-	if err := repo.initTurnChangesSchema(); err != nil {
+	if err := repo.runMigrations(ctx); err != nil {
 		t.Fatalf("upgrade postgres schema: %v", err)
 	}
 	row, err := repo.GetTurnRepositoryChange(ctx, changeSetID, repositoryChangeID)

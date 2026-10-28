@@ -28,7 +28,7 @@ const mock = vi.hoisted(() => ({
         enumeration_complete: true,
         comparison_complete: true,
         content_complete: false,
-        export_state: "queued" as "queued" | "unavailable",
+        export_state: "queued" as "queued" | "running" | "retrying" | "complete" | "unavailable",
       },
     ],
   },
@@ -73,6 +73,7 @@ vi.mock("react-i18next", () => ({
 afterEach(cleanup);
 
 const LOADING_COPY = "task:turnChangesLoading";
+const LATE_PATCH = "late file diff";
 
 const target = {
   sessionId: "session-1",
@@ -108,9 +109,21 @@ it("shows a terminal content error instead of masking it as pending", () => {
 });
 
 it("shows a loaded patch for a synthetic later-page selection", () => {
-  mock.content = { patch: "late file diff", loading: false, error: null };
+  mock.content = { patch: LATE_PATCH, loading: false, error: null };
   render(<HistoricalTurnDiffViewer target={{ ...target }} />);
-  expect(screen.getByTestId("file-diff").textContent).toBe("late file diff");
+  expect(screen.getByTestId("file-diff").textContent).toBe(LATE_PATCH);
+  expect(screen.queryByText(LOADING_COPY)).toBeNull();
+});
+
+it("retries a synthetic later-page selection when its repository settles", () => {
+  const { rerender } = render(<HistoricalTurnDiffViewer target={{ ...target }} />);
+  expect(screen.getByText(LOADING_COPY)).toBeTruthy();
+
+  mock.summary.repositories[0].export_state = "complete";
+  mock.content = { patch: LATE_PATCH, loading: false, error: null };
+  rerender(<HistoricalTurnDiffViewer target={{ ...target }} />);
+
+  expect(screen.getByTestId("file-diff").textContent).toBe(LATE_PATCH);
   expect(screen.queryByText(LOADING_COPY)).toBeNull();
 });
 

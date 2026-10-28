@@ -101,6 +101,13 @@ func (g *GitOperator) captureTurnCheckpointLocked(
 	} else if found {
 		return existing, nil
 	}
+	// Capture history before preparing the snapshot so a concurrent rebase
+	// cannot pair old working-tree content with the new base. Verification
+	// after the snapshot rejects any movement in between.
+	provenance, err := g.captureTurnCheckpointProvenance(ctx, request, gitDir, hashAlgorithm)
+	if err != nil {
+		return turnchanges.CheckpointResult{}, err
+	}
 	indexPath, err := createTurnCheckpointIndex(gitDir)
 	if err != nil {
 		return turnchanges.CheckpointResult{}, turnCheckpointFailure(turnchanges.ReasonCaptureFailed, err)
@@ -111,10 +118,6 @@ func (g *GitOperator) captureTurnCheckpointLocked(
 		return turnchanges.CheckpointResult{}, turnCheckpointFailure(turnchanges.ReasonUnsafeGitState, err)
 	}
 	if err := g.prepareTurnCheckpointIndex(ctx, indexPath, indexPresent); err != nil {
-		return turnchanges.CheckpointResult{}, err
-	}
-	provenance, err := g.captureTurnCheckpointProvenance(ctx, request, gitDir, hashAlgorithm)
-	if err != nil {
 		return turnchanges.CheckpointResult{}, err
 	}
 	treeOID, commitOID, capturedAt, err := g.writeTurnCheckpointCommit(ctx, indexPath, hashAlgorithm, provenance)

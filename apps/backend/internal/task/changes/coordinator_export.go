@@ -391,12 +391,16 @@ func (c *Coordinator) resolveSkippedExportAttempt(
 	if err != nil {
 		return row, err
 	}
-	if latest.ContentComplete || latest.ExportState == models.TurnChangeExportRunning ||
-		latest.ExportState == models.TurnChangeExportComplete ||
+	if latest.ContentComplete || latest.ExportState == models.TurnChangeExportComplete ||
 		latest.ExportState == models.TurnChangeExportUnavailable {
 		return latest, nil
 	}
-	if latest.ExportNextAttemptAt != nil && latest.ExportNextAttemptAt.After(c.now().UTC()) {
+	now := c.now().UTC()
+	if latest.ExportState == models.TurnChangeExportRunning &&
+		latest.ExportClaimExpiresAt != nil && latest.ExportClaimExpiresAt.After(now) {
+		return latest, nil
+	}
+	if latest.ExportNextAttemptAt != nil && latest.ExportNextAttemptAt.After(now) {
 		return latest, nil
 	}
 	return c.failTurnRepositoryExport(ctx, latest, latest.ExportClaimToken, models.TurnChangeReasonExportTimeout)

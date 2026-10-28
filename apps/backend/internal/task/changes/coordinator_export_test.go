@@ -170,3 +170,26 @@ func TestTurnChangeExportPageTimeoutClassification(t *testing.T) {
 	terminalPage := turnChangeExportPageFor(&terminal, ExportReceipt{Reason: models.TurnChangeReasonSizeLimit}, models.TurnChangeExportClaim{Cursor: 0})
 	require.True(t, terminalPage.Failed)
 }
+
+func TestSkippedExportAttemptSettlesExpiredExhaustedClaim(t *testing.T) {
+	store, _, coordinator, admission := newExportFixture(t)
+	changeSet := store.changeSets[turnChangeSetID(admission.TurnID)]
+	row := store.repositoryRows[changeSet.ID][0]
+	row.ExportState = models.TurnChangeExportRunning
+	row.ExportAttempts = 3
+	row.ExportClaimToken = 7
+	expired := coordinator.now().UTC().Add(-time.Minute)
+	row.ExportClaimExpiresAt = &expired
+
+	resolved, err := coordinator.resolveSkippedExportAttempt(context.Background(), changeSet.ID, *row)
+	require.NoError(t, err)
+	require.Equal(t, models.TurnChangeExportUnavailable, resolved.ExportState)
+	require.Equal(t, models.TurnChangeReasonExportTimeout, resolved.ExportReason)
+
+	row.ExportState = models.TurnChangeExportRunning
+	row.ExportClaimExpiresAt = timePtr(coordinator.now().UTC().Add(time.Minute))
+	resolved, err = coordinator.resolveSkippedExportAttempt(context.Background(), changeSet.ID, *row)
+	require.NoError(t, err)
+	require.Equal(t, models.TurnChangeExportRunning, resolved.ExportState,
+		"an unexpired live claim must stay deferred")
+}

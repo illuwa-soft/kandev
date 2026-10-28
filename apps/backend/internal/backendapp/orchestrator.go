@@ -221,6 +221,7 @@ func provideOrchestrator(
 	turnChangeExportProcessor.SetSummaryPublisher(taskSvc)
 	turnChangeExportProcessor.SetLogger(log.Zap())
 	if ctx != nil {
+		context.AfterFunc(ctx, turnChangeExportProcessor.Stop)
 		startup.AfterReady(ctx, func() {
 			if err := turnChangeCoordinator.ReconcileUnfinished(context.Background()); err != nil {
 				log.Warn("failed to reconcile unfinished turn-change captures", zap.Error(err))

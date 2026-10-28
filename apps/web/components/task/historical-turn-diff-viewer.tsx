@@ -153,6 +153,10 @@ function oldPathForTarget(
   return saved?.selectedFileOldPath ?? undefined;
 }
 
+function repositoryForFile(summary: TurnChangeSetSummary | undefined, file: TurnFileChange | null) {
+  return summary?.repositories.find((repository) => repository.id === file?.repository_change_id);
+}
+
 function loadingLabel(t: (key: string) => string): string {
   return t("task:turnChangesLoading");
 }
@@ -222,9 +226,15 @@ export const HistoricalTurnDiffViewer = memo(function HistoricalTurnDiffViewer({
     !expired &&
     isSelectedContentPending(selectedFile, summary, content.patch !== null, content.error);
   const unavailable = Boolean(content.error && !expired && !pendingContent);
-  useReadyContentRetry(selectedFile, content.error, content.loading, whitespace, () =>
-    setRetryKey((key) => key + 1),
-  );
+  const selectedRepository = repositoryForFile(summary, selectedFile);
+  useReadyContentRetry({
+    selectedFile,
+    contentError: content.error,
+    contentLoading: content.loading,
+    whitespace,
+    repositorySettled: selectedRepository?.export_state === "complete",
+    retry: () => setRetryKey((key) => key + 1),
+  });
   const handleScopeSelect = (value: string) => {
     const selection = resolveTurnChangeScope(value, summaries);
     if (!selection) return;

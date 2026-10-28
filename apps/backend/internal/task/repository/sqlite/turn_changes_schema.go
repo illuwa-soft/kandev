@@ -48,12 +48,19 @@ func (r *Repository) initTurnChangesSchema() error {
 			return fmt.Errorf("add turn repository cleanup receipt: %w", err)
 		}
 	}
+	if err := r.migrate.Err(); err != nil {
+		return fmt.Errorf("initialize turn changes schema: %w", err)
+	}
+	return nil
+}
+
+// migrateTurnChangeHistorySchema upgrades existing tables with the history
+// provenance and export progress columns. It lives in runMigrations because
+// the dependent index and backfill must follow the ADD COLUMN steps on an
+// existing database.
+func (r *Repository) migrateTurnChangeHistorySchema() error {
 	if err := r.migrateTurnRepositoryHistoryColumns(); err != nil {
 		return err
-	}
-	if _, err := r.db.ExecContext(r.migrationContext(),
-		`CREATE INDEX IF NOT EXISTS idx_turn_repository_changes_export ON turn_repository_changes(export_state, export_next_attempt_at)`); err != nil {
-		return fmt.Errorf("index turn repository export progress: %w", err)
 	}
 	if err := r.migrate.Apply("turn_repository_changes.export_index",
 		`CREATE INDEX IF NOT EXISTS idx_turn_repository_changes_export ON turn_repository_changes(export_state, export_next_attempt_at)`); err != nil {
@@ -62,12 +69,8 @@ func (r *Repository) initTurnChangesSchema() error {
 	if err := r.backfillLegacyTurnRepositoryComparisons(); err != nil {
 		return err
 	}
-	if err := r.migrate.Err(); err != nil {
-		return fmt.Errorf("initialize turn changes schema: %w", err)
-	}
 	return nil
 }
-
 func (r *Repository) migrateTurnRepositoryHistoryColumns() error {
 	for _, column := range []struct {
 		name string
