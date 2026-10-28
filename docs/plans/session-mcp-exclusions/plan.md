@@ -991,3 +991,27 @@ passed 79 frontend cases, full typecheck, five MCP backend race packages, the
 streams race package, and desktop/phone MCP pending-retry journeys. Synthetic
 commit: `ac14dfab98ebbb626bfd3fb943b5cf37043bcefd`. The current correction changes
 only test cleanup and this record; final base/head evidence remains external.
+
+
+### Rename fixture Git-status ordering (2026-10-28)
+
+The next published head completed 90 passing and 11 skipped checks. All 118
+browser reports were audited: the storage-discovery failure was gone, but the
+blur-rename case passed only after retry. Its disk assertions passed while the
+screenshot showed Changes active instead of Files. Three ordinary isolated runs
+passed (`/tmp/kandev-run.e2e.zpr0WjpK.log`), so a temporary WebSocket probe held
+only the real renamed-file status notification. Releasing it after the existing
+Files selection reproduced the exact missing-tree failure
+(`/tmp/kandev-run.e2e.6eaabzJA.log`).
+
+Waiting for the renamed file in Changes before selecting Files passed the same
+controlled ordering (`/tmp/kandev-run.e2e.rt8ZhLMz.log`). The temporary probe was
+removed. Both committing rename cases now wait for that visible Git update;
+all disk/tree assertions and existing timeouts remain. All four rename cases
+pass without retries (`/tmp/kandev-run.e2e.P9Nb7jrA.log`), as do changed-file
+ESLint and Prettier. An initial local reproduction could not launch full
+Chromium because host libraries were absent; a process-local library path
+resolved that environment issue before the recorded test runs.
+
+No product behavior or public documentation changed. Current-main integration
+and the next exact-head CI/review cycle remain required before delivery.
