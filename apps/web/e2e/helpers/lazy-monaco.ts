@@ -77,6 +77,12 @@ export async function verifyLazyMonaco(
     await expect(page.getByTestId("mobile-file-viewer-panel").locator(".cm-content")).toContainText(
       "lazyEditorReady",
     );
+    await dwell(
+      page,
+      500,
+      "negative-assertion",
+      "observe late Monaco requests after the phone viewer opens",
+    );
     expect(requests).toEqual([]);
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),

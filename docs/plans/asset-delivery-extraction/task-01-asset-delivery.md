@@ -132,6 +132,15 @@ registered no Vitest suite. The exact Vitest command reproduces that failure.
 The test now uses Vitest's test and cleanup APIs; both compression cases pass
 through the same project selection used by CI.
 
+A later review reproduced an asset-length header on bodyless 412 responses.
+Eight cases cover failing `If-Match` and `If-Unmodified-Since` preconditions for
+gzip/identity GET and HEAD. All fail before the fix and pass after clearing the
+length on 412. The full webapp package and scoped Go lint pass. The existing
+translated lazy-editor fallback now exposes a status region. The phone browser
+check observes late imports after the native viewer opens before asserting that
+Monaco remains unloaded.
+Both lazy-loading browser cases and scoped web lint pass after these changes.
+
 ## Documentation impact
 
 Public docs need no change: compression and deferred imports require no new

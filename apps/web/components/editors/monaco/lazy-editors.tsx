@@ -17,7 +17,10 @@ const DiffViewer = lazy(async () => {
 function EditorLoading({ diff = false }: { diff?: boolean }) {
   const { t } = useTranslation();
   return (
-    <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
+    <div
+      role="status"
+      className="flex h-full items-center justify-center text-muted-foreground text-sm"
+    >
       {diff ? t("editors:loadingDiff") : t("editors:loadingEditor")}
     </div>
   );

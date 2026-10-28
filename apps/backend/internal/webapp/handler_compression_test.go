@@ -175,3 +175,28 @@ func TestAssetCompressionFallbackAndShell(t *testing.T) {
 }
 
 var _ io.Reader = unseekableAsset{}
+
+// @covers AC-PLATFORM-WEB-ASSET-DELIVERY-001.3
+func TestAssetFailedPrecondition(t *testing.T) {
+	for _, encoding := range []string{"gzip", "identity"} {
+		for _, method := range []string{http.MethodGet, http.MethodHead} {
+			for _, condition := range []struct{ header, value string }{
+				{"If-Match", `"missing-etag"`},
+				{"If-Unmodified-Since", "Thu, 01 Jan 2026 03:04:05 GMT"},
+			} {
+				t.Run(encoding+method+condition.header, func(t *testing.T) {
+					assets, _, _ := compressedAssetFixture(t)
+					request := httptest.NewRequest(method, "/assets/app.js", nil)
+					request.Header.Set("Accept-Encoding", encoding)
+					request.Header.Set(condition.header, condition.value)
+					response := httptest.NewRecorder()
+					NewHandler(assets).ServeHTTP(response, request)
+					require.Equal(t, http.StatusPreconditionFailed, response.Code)
+					require.Empty(t, response.Body.Bytes())
+					require.Empty(t, response.Header().Get("Content-Length"))
+					require.Empty(t, response.Header().Get("Content-Encoding"))
+				})
+			}
+		}
+	}
+}

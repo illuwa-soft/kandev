@@ -52,6 +52,9 @@ func varyAssetEncoding(header http.Header) {
 type assetResponseWriter struct{ http.ResponseWriter }
 
 func (w assetResponseWriter) WriteHeader(status int) {
+	if status == http.StatusPreconditionFailed {
+		w.Header().Del("Content-Length")
+	}
 	if status >= http.StatusBadRequest {
 		w.Header().Del("Content-Encoding")
 	}
