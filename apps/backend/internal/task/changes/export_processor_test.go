@@ -62,3 +62,22 @@ func TestExportProcessorStopWaitsForInflightPass(t *testing.T) {
 
 	processor.Stop()
 }
+
+func TestExportProcessorCandidateDefersConcreteRestore(t *testing.T) {
+	store, _, coordinator, admission := newExportFixture(t)
+	changeSet := store.changeSets[turnChangeSetID(admission.TurnID)]
+	row := store.repositoryRows[changeSet.ID][0]
+	processor := NewExportProcessor(store, coordinator)
+
+	processor.SetClientProvider(staticExportProvider{ok: false, restoreInProgress: true})
+	processor.processCandidate(context.Background(), row)
+	if row.ExportState == models.TurnChangeExportUnavailable {
+		t.Fatal("a concrete restore must not settle the row unavailable")
+	}
+
+	processor.SetClientProvider(staticExportProvider{ok: false})
+	processor.processCandidate(context.Background(), row)
+	if row.ExportState != models.TurnChangeExportUnavailable {
+		t.Fatalf("missing provider without a restore must settle unavailable, got %s", row.ExportState)
+	}
+}

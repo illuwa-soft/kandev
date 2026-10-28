@@ -188,6 +188,9 @@ func (p *ExportProcessor) processCandidate(ctx context.Context, row *models.Turn
 	}
 	client, release, ok := p.provider.AcquireTurnChangeExporter(ctx, changeSet.TaskSessionID)
 	if !ok {
+		if turnChangeRestoreInProgress(p.provider, changeSet.TaskSessionID) {
+			return
+		}
 		if _, err := p.coordinator.failTurnRepositoryExport(ctx, *row, row.ExportClaimToken, models.TurnChangeReasonExportMissingObject); err != nil {
 			p.logger.Warn("turn-change content source is unavailable",
 				zap.String("change_set_id", changeSet.ID), zap.Error(err))
