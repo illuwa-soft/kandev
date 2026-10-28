@@ -864,3 +864,31 @@ production retry behavior and its existing verification remain unchanged.
 Both desktop and phone capture/recovery journeys passed with retries disabled
 after the identity correction; their manifest test identities are distinct.
 Logs: `/tmp/kandev-run.e2e.EGVVcE5L.log`, `/tmp/kandev-run.e2e.jxqzP7M2.log`.
+
+### Ready-review rebase after task-creation recovery merged
+
+Main advanced from `aa229b60dd9281043f7638767777222f5723f710` to
+`91a20b1373c567ad7b138d6d509fc18d80d3a3a6` during CI. Backed up the
+published head `698ce064d727906f1f39339b94abbe96dc7bf8c7` at
+`backup/exclusions-before-main-91a-20261028` and replayed the eleven owned
+commits. The only conflicts were the eight task translation catalogs: retained
+all upstream task-creation recovery copy and the unchanged session-exclusion
+key. Duplicate-key validation and exact parsed comparisons confirmed that each
+catalog equals upstream plus that key. Range-diff shows only the changed insertion
+context; the other ten patches are identical. MCP source and review fixes remain
+byte-identical to the previous published head.
+
+Validation on the reconciled tree passed: 73 focused frontend/capture tests,
+three MCP Go race packages, full frontend typecheck, translation checks (4208
+guarded files), changed-file ESLint, catalog formatting, documentation catalog
+and full specification lint. A fresh managed build passed four desktop cases
+(pending/retry, normal exclusions, narrow fine-pointer and coarse-pointer tablet)
+and two phone cases, all with retries disabled. Logs:
+`/tmp/kandev-run.e2e.V0FZANvJ.log` and `/tmp/kandev-run.e2e.s1u9suhI.log`.
+
+The prior head's Greptile thread was replied to and resolved; its CodeRabbit
+review was clear after the capture-identity correction. Claude's partial backend
+review had no blockers; its session revision question was answered. The prior
+Cloudflare docs-preview failure was provider error 10500; attempt 2 passed
+without source changes. These are historical review/CI receipts, not validation
+of the rebased head. New-head CI and automated review remain pending publication.
