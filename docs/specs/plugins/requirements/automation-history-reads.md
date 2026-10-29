@@ -1,5 +1,5 @@
 ---
-status: draft
+status: active
 system: plugins
 created: 2026-10-29
 owners:

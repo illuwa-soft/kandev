@@ -148,6 +148,9 @@ service Host {
   rpc UpdateManagedConversationScheduleExact(UpdateManagedConversationScheduleExactRequest) returns (ManagedConversationScheduleExactResponse);
   rpc SetManagedConversationScheduleEnabledExact(SetManagedConversationScheduleEnabledExactRequest) returns (ManagedConversationScheduleExactResponse);
   rpc DeleteManagedConversationScheduleExact(DeleteManagedConversationScheduleExactRequest) returns (HostCommandResult);
+  rpc ListAutomationDefinitionsExact(AutomationHistoryQuery) returns (AutomationDefinitionPage);
+  rpc ListAutomationRunsExact(AutomationHistoryQuery) returns (AutomationRunPage);
+  rpc GetAutomationRunExact(AutomationRunLookup) returns (AutomationRunResult);
   rpc EnsureTaskRunExact(EnsureTaskRunExactRequest) returns (EnsureTaskRunExactResponse);
   rpc StopTaskRunExact(StopTaskRunExactRequest) returns (StopTaskRunExactResponse);
   rpc RecoverSessionExact(RecoverSessionExactRequest) returns (RecoverSessionExactResponse);
@@ -1104,6 +1107,32 @@ for page.PageInfo.HasMore {
 Browser plugins do not receive this privileged gRPC connection. A plugin may
 project observations from its Go backend to its own UI, but the TypeScript SDK
 does not add a browser path for exact Host queries.
+
+### Optional automation history observations
+
+`pluginsdk.AutomationHistory(host)` exposes `AutomationHistoryReader` with
+`ListAutomations`, `ListRuns`, and `GetRun`. The wire methods are
+`ListAutomationDefinitionsExact`, `ListAutomationRunsExact`, and
+`GetAutomationRunExact`. The query/observation messages in `plugin.proto` are the
+field authority. Existing `Host`, exact-query, and managed-schedule interfaces
+remain source-compatible.
+
+Each method requires `api_read: automations`, an active
+`host.v2.read:automations` grant, and a visible workspace. Lists accept
+`AutomationHistoryQuery` with optional `AutomationID` and `ExactReadPage`; their
+`ExactReadPageInfo` uses the snapshot, cursor, receipt, bounds, and expiration
+rules above. Exact lookup accepts `AutomationRunLookup` and returns the current
+observation plus `HostReadReceipt`. Foreign and nonexistent identities both
+return `NotFound`. An unavailable source is advertised as
+`automation_history_unavailable`; old Hosts return `Unimplemented`.
+
+Definition/run projections preserve source identities, statuses, timestamps,
+safe schedules, and retry links without exporting prompts, raw trigger data,
+secrets, or claim tokens. A projection digest changes with the safe observed
+content, not merely with observation time. Refreshing a run uses the same
+read-time status and exact-turn summary projection as history lists, while a
+previous list snapshot remains immutable. No execution time is synthesized and
+no read triggers a mutation or provider call.
 
 ### Host v2 exact workspace administration
 

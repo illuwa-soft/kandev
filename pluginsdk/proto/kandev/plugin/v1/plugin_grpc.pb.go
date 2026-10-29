@@ -864,6 +864,9 @@ const (
 	Host_RespondToPermission_FullMethodName                        = "/kandev.plugin.v1.Host/RespondToPermission"
 	Host_AnswerClarification_FullMethodName                        = "/kandev.plugin.v1.Host/AnswerClarification"
 	Host_CancelClarification_FullMethodName                        = "/kandev.plugin.v1.Host/CancelClarification"
+	Host_ListAutomationDefinitionsExact_FullMethodName             = "/kandev.plugin.v1.Host/ListAutomationDefinitionsExact"
+	Host_ListAutomationRunsExact_FullMethodName                    = "/kandev.plugin.v1.Host/ListAutomationRunsExact"
+	Host_GetAutomationRunExact_FullMethodName                      = "/kandev.plugin.v1.Host/GetAutomationRunExact"
 )
 
 // HostClient is the client API for Host service.
@@ -1068,6 +1071,10 @@ type HostClient interface {
 	RespondToPermission(ctx context.Context, in *RespondToPermissionRequest, opts ...grpc.CallOption) (*RespondToPermissionResponse, error)
 	AnswerClarification(ctx context.Context, in *AnswerClarificationRequest, opts ...grpc.CallOption) (*AnswerClarificationResponse, error)
 	CancelClarification(ctx context.Context, in *CancelClarificationRequest, opts ...grpc.CallOption) (*CancelClarificationResponse, error)
+	// Optional workspace-scoped, read-only automation history extension.
+	ListAutomationDefinitionsExact(ctx context.Context, in *AutomationHistoryQuery, opts ...grpc.CallOption) (*AutomationDefinitionPage, error)
+	ListAutomationRunsExact(ctx context.Context, in *AutomationHistoryQuery, opts ...grpc.CallOption) (*AutomationRunPage, error)
+	GetAutomationRunExact(ctx context.Context, in *AutomationRunLookup, opts ...grpc.CallOption) (*AutomationRunResult, error)
 }
 
 type hostClient struct {
@@ -2117,6 +2124,36 @@ func (c *hostClient) CancelClarification(ctx context.Context, in *CancelClarific
 	return out, nil
 }
 
+func (c *hostClient) ListAutomationDefinitionsExact(ctx context.Context, in *AutomationHistoryQuery, opts ...grpc.CallOption) (*AutomationDefinitionPage, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AutomationDefinitionPage)
+	err := c.cc.Invoke(ctx, Host_ListAutomationDefinitionsExact_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *hostClient) ListAutomationRunsExact(ctx context.Context, in *AutomationHistoryQuery, opts ...grpc.CallOption) (*AutomationRunPage, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AutomationRunPage)
+	err := c.cc.Invoke(ctx, Host_ListAutomationRunsExact_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *hostClient) GetAutomationRunExact(ctx context.Context, in *AutomationRunLookup, opts ...grpc.CallOption) (*AutomationRunResult, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AutomationRunResult)
+	err := c.cc.Invoke(ctx, Host_GetAutomationRunExact_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // HostServer is the server API for Host service.
 // All implementations must embed UnimplementedHostServer
 // for forward compatibility.
@@ -2319,6 +2356,10 @@ type HostServer interface {
 	RespondToPermission(context.Context, *RespondToPermissionRequest) (*RespondToPermissionResponse, error)
 	AnswerClarification(context.Context, *AnswerClarificationRequest) (*AnswerClarificationResponse, error)
 	CancelClarification(context.Context, *CancelClarificationRequest) (*CancelClarificationResponse, error)
+	// Optional workspace-scoped, read-only automation history extension.
+	ListAutomationDefinitionsExact(context.Context, *AutomationHistoryQuery) (*AutomationDefinitionPage, error)
+	ListAutomationRunsExact(context.Context, *AutomationHistoryQuery) (*AutomationRunPage, error)
+	GetAutomationRunExact(context.Context, *AutomationRunLookup) (*AutomationRunResult, error)
 	mustEmbedUnimplementedHostServer()
 }
 
@@ -2637,6 +2678,15 @@ func (UnimplementedHostServer) AnswerClarification(context.Context, *AnswerClari
 }
 func (UnimplementedHostServer) CancelClarification(context.Context, *CancelClarificationRequest) (*CancelClarificationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CancelClarification not implemented")
+}
+func (UnimplementedHostServer) ListAutomationDefinitionsExact(context.Context, *AutomationHistoryQuery) (*AutomationDefinitionPage, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListAutomationDefinitionsExact not implemented")
+}
+func (UnimplementedHostServer) ListAutomationRunsExact(context.Context, *AutomationHistoryQuery) (*AutomationRunPage, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListAutomationRunsExact not implemented")
+}
+func (UnimplementedHostServer) GetAutomationRunExact(context.Context, *AutomationRunLookup) (*AutomationRunResult, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAutomationRunExact not implemented")
 }
 func (UnimplementedHostServer) mustEmbedUnimplementedHostServer() {}
 func (UnimplementedHostServer) testEmbeddedByValue()              {}
@@ -4506,6 +4556,60 @@ func _Host_CancelClarification_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Host_ListAutomationDefinitionsExact_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AutomationHistoryQuery)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HostServer).ListAutomationDefinitionsExact(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Host_ListAutomationDefinitionsExact_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HostServer).ListAutomationDefinitionsExact(ctx, req.(*AutomationHistoryQuery))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Host_ListAutomationRunsExact_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AutomationHistoryQuery)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HostServer).ListAutomationRunsExact(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Host_ListAutomationRunsExact_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HostServer).ListAutomationRunsExact(ctx, req.(*AutomationHistoryQuery))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Host_GetAutomationRunExact_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AutomationRunLookup)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HostServer).GetAutomationRunExact(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Host_GetAutomationRunExact_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HostServer).GetAutomationRunExact(ctx, req.(*AutomationRunLookup))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Host_ServiceDesc is the grpc.ServiceDesc for Host service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -4920,6 +5024,18 @@ var Host_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CancelClarification",
 			Handler:    _Host_CancelClarification_Handler,
+		},
+		{
+			MethodName: "ListAutomationDefinitionsExact",
+			Handler:    _Host_ListAutomationDefinitionsExact_Handler,
+		},
+		{
+			MethodName: "ListAutomationRunsExact",
+			Handler:    _Host_ListAutomationRunsExact_Handler,
+		},
+		{
+			MethodName: "GetAutomationRunExact",
+			Handler:    _Host_GetAutomationRunExact_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
