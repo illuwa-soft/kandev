@@ -433,6 +433,9 @@ reader. Exact workspace observations use `pluginsdk.HostExactQueries(host)` and
 also require a matching workspace grant such as `host.v2.read:tasks` or
 `host.v2.read:usage`. The Host advertises per-method support and authorization;
 an RPC present in the protocol does not mean that every host has its data source.
+`automations` also enables `pluginsdk.AutomationHistory(host)` definition, run
+history, and exact run reads with a `host.v2.read:automations` workspace grant.
+It does not grant scheduling, retry, or mutation authority.
 See [Authoring a plugin](plugins-authoring.md). Calling an accessor or exact
 manager without its resource declared returns gRPC `PermissionDenied`.
 

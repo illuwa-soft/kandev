@@ -148,6 +148,9 @@ service Host {
   rpc UpdateManagedConversationScheduleExact(UpdateManagedConversationScheduleExactRequest) returns (ManagedConversationScheduleExactResponse);
   rpc SetManagedConversationScheduleEnabledExact(SetManagedConversationScheduleEnabledExactRequest) returns (ManagedConversationScheduleExactResponse);
   rpc DeleteManagedConversationScheduleExact(DeleteManagedConversationScheduleExactRequest) returns (HostCommandResult);
+  rpc ListAutomationDefinitionsExact(AutomationHistoryQuery) returns (AutomationDefinitionPage);
+  rpc ListAutomationRunsExact(AutomationHistoryQuery) returns (AutomationRunPage);
+  rpc GetAutomationRunExact(AutomationRunLookup) returns (AutomationRunResult);
   rpc EnsureTaskRunExact(EnsureTaskRunExactRequest) returns (EnsureTaskRunExactResponse);
   rpc StopTaskRunExact(StopTaskRunExactRequest) returns (StopTaskRunExactResponse);
   rpc RecoverSessionExact(RecoverSessionExactRequest) returns (RecoverSessionExactResponse);
@@ -1104,6 +1107,21 @@ for page.PageInfo.HasMore {
 Browser plugins do not receive this privileged gRPC connection. A plugin may
 project observations from its Go backend to its own UI, but the TypeScript SDK
 does not add a browser path for exact Host queries.
+
+### Optional automation history observations
+
+`pluginsdk.AutomationHistory(host)` exposes `ListAutomations`, `ListRuns`, and
+`GetRun` through the additive `ListAutomationDefinitionsExact`,
+`ListAutomationRunsExact`, and `GetAutomationRunExact` RPCs. Require
+`api_read: automations` and the active `host.v2.read:automations` workspace grant.
+Use capability discovery; a matching SDK or version does not prove Host support.
+
+Lists use `AutomationHistoryQuery` and the existing exact snapshot/page receipt
+rules. Exact lookup uses `AutomationRunLookup` and refreshes the same read-time
+status and exact-turn summary projection as lists. A foreign or missing source
+returns `NotFound`; an unavailable source advertises
+`automation_history_unavailable`; an older Host returns `Unimplemented`.
+DTOs omit prompts, raw trigger bodies, secrets, and internal claim tokens.
 
 ### Host v2 exact workspace administration
 
