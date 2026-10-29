@@ -946,6 +946,7 @@ subscription vocabulary and wildcard rules are in the
 | Managed conversations      | `ExactHost.ManagedAgentConversations()`                                                                                          | `api_read` and/or `api_write: managed_agent_conversations`, plus matching Host v2 workspace grant                                                 | Installation-owned hidden conversations with revisioned launch settings, pause state, retained lifecycle, and durable mutation receipts                                                                                                                                                   |
 | Managed conversation input | `EnqueueInput`, `GetInput`, `ListInputs`, `CancelInput`, `Dispatch`                                                              | Reads use `api_read: managed_agent_conversations`; writes use `api_write: managed_agent_conversations`, plus the matching Host v2 workspace grant | Durable FIFO receipts, bounded sequence reads, exact active cancellation, and immediate dispatch whose `busy` result never queues                                                                                                                                                         |
 | Managed conversation schedules | `HostManagedConversationSchedules(host)`: `List`, `Create`, `Update`, `SetEnabled`, `Delete`                              | Reads require `api_read: automations` plus `host.v2.read:automations`; writes require `api_write: automations` plus `host.v2.write:automations` | Installation-owned schedules use revisioned commands and durable receipts; delivery reauthorizes the retained destination and retries by occurrence ID                                                                                                                                   |
+| Automation history        | `AutomationHistory(host)`: `ListAutomations`, `ListRuns`, `GetRun` | `api_read: automations` plus active `host.v2.read:automations` workspace grant | Optional read-only history with immutable snapshots and exact current-outcome refresh. |
 | Sessions                   | Sessions().List, Sessions().CodeStats                                                                                            | api_read: sessions                                                                                                                                | Typed session and computed code-stat records                                                                                                                                                                                                                                              |
 | Workspaces                 | Workspaces().List                                                                                                                | api_read: workspaces                                                                                                                              | Instance-visible workspaces                                                                                                                                                                                                                                                               |
 | Workflows                  | Workflows().List, Workflows().ListSteps                                                                                          | api_read: workflows                                                                                                                               | List steps by workflow id                                                                                                                                                                                                                                                                 |
@@ -964,6 +965,26 @@ The Go signatures, filters, DTOs, and pagination types live in
 apps/backend/pkg/pluginsdk/host.go and data_types.go. api_write task/message
 methods are implemented in the current branch; do not repeat older docs that
 call them reserved.
+
+### Read automation execution history
+
+The optional `pluginsdk.AutomationHistory(host)` reader exposes `ListAutomations`,
+`ListRuns`, and `GetRun`. Declare `api_read: automations` and obtain the active
+`host.v2.read:automations` workspace grant. Check `GetCapabilityContext` for
+`ListAutomationDefinitionsExact`, `ListAutomationRunsExact`, and
+`GetAutomationRunExact`; an older Host returns `Unimplemented`.
+
+Lists accept `AutomationHistoryQuery` with an explicit workspace and optional
+automation ID. Continue using both `PageInfo.NextCursor` and
+`PageInfo.SnapshotVersion` while `PageInfo.HasMore` is true. Pages contain at most
+200 rows; snapshots expire after five minutes and are limited to 5,000 rows and
+8 MiB. Expired snapshots require a new query. Errors never mean an empty inventory.
+
+Use `AutomationRunLookup` to refresh known runs independently of creation time.
+Results preserve source status, timestamps and retry links, omit credentials and
+raw trigger bodies, and never schedule work. Observation time is separate from
+source creation time. The stable backport requires actual method support; a
+matching release version alone does not prove availability.
 
 ### Build an independent coordination policy
 

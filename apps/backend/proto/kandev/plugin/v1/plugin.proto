@@ -251,6 +251,11 @@ service Host {
   rpc RespondToPermission(RespondToPermissionRequest) returns (RespondToPermissionResponse);
   rpc AnswerClarification(AnswerClarificationRequest) returns (AnswerClarificationResponse);
   rpc CancelClarification(CancelClarificationRequest) returns (CancelClarificationResponse);
+
+  // Optional workspace-scoped, read-only automation history extension.
+  rpc ListAutomationDefinitionsExact(AutomationHistoryQuery) returns (AutomationDefinitionPage);
+  rpc ListAutomationRunsExact(AutomationHistoryQuery) returns (AutomationRunPage);
+  rpc GetAutomationRunExact(AutomationRunLookup) returns (AutomationRunResult);
 }
 
 enum HostCommandStatus {
@@ -2654,3 +2659,73 @@ message ListChangeRequestEvidenceExactRequest { string request_id = 1; string wo
 message ListChangeRequestEvidenceExactResponse { repeated ChangeRequestEvidence items = 1; ExactReadPageInfo page_info = 2; }
 message ListTaskUsageExactRequest { string request_id = 1; string workspace_id = 2; repeated string task_ids = 3; ExactReadPage page = 4; }
 message ListTaskUsageExactResponse { repeated TaskUsageObservation items = 1; ExactReadPageInfo page_info = 2; }
+
+message AutomationHistoryQuery {
+  string request_id = 1;
+  string workspace_id = 2;
+  string automation_id = 3;
+  ExactReadPage page = 4;
+}
+
+message AutomationRunLookup {
+  string request_id = 1;
+  string workspace_id = 2;
+  string run_id = 3;
+}
+
+message AutomationSchedule {
+  string trigger_id = 1;
+  string trigger_type = 2;
+  string expression = 3;
+  string timezone = 4;
+  bool enabled = 5;
+}
+
+message AutomationDefinition {
+  string id = 1;
+  string workspace_id = 2;
+  string name = 3;
+  bool enabled = 4;
+  string agent_profile_id = 5;
+  string executor_profile_id = 6;
+  string created_at = 7;
+  string updated_at = 8;
+  repeated AutomationSchedule schedules = 9;
+  string resource_version = 10;
+  string observed_at = 11;
+}
+
+message AutomationRunObservation {
+  string id = 1;
+  string workspace_id = 2;
+  string automation_id = 3;
+  string trigger_id = 4;
+  string trigger_type = 5;
+  string task_id = 6;
+  string session_id = 7;
+  string turn_id = 8;
+  string status = 9;
+  string summary = 10;
+  string error_message = 11;
+  string retry_group_id = 12;
+  string retry_parent_run_id = 13;
+  int64 attempt_number = 14;
+  string created_at = 15;
+  string resource_version = 16;
+  string observed_at = 17;
+}
+
+message AutomationDefinitionPage {
+  repeated AutomationDefinition items = 1;
+  ExactReadPageInfo page_info = 2;
+}
+
+message AutomationRunPage {
+  repeated AutomationRunObservation items = 1;
+  ExactReadPageInfo page_info = 2;
+}
+
+message AutomationRunResult {
+  AutomationRunObservation item = 1;
+  HostReadReceipt receipt = 2;
+}
