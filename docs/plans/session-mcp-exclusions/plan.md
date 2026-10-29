@@ -1098,3 +1098,24 @@ source flow. Three fresh isolated runs passed (`/tmp/kandev-run.e2e.VBMRWuQ4.log
 then all four source-flow cases passed in predecessor order with four-CPU
 affinity (`/tmp/kandev-run.e2e.OVYtLlFh.log`), all with retries disabled. No
 root cause was established and no speculative picker change was made.
+
+
+### Threads question scroll-owner fixture, 2026-10-29
+
+The complete `83c1ff0b3` CI run passed 90 checks with 11 skips, but its 118
+browser reports and retry summary retained three first-attempt failures. The
+runtime-update observation and unreproduced folder-picker case are recorded
+above. The third failure tried to swipe an offscreen inner question after its
+footer had become the declared scroll owner. A temporary footer-at-bottom
+probe reproduced the same negative hit-area height without retries
+(`/tmp/kandev-run.e2e.uHd3aLh1.log`). Targeting the declared footer owner passed
+the identical probe (`/tmp/kandev-run.e2e.sDK56DA6.log`). The probe was removed.
+
+The helper now derives gesture coordinates from the active scroll owner. It
+retains native wheel/touch input, settling, clipping and target-hit assertions.
+Four normal phone/coarse-pointer cases passed without retries
+(`/tmp/kandev-run.e2e.3S6WCAi7.log`); the desktop Columns inner-owner case also
+passed (`/tmp/kandev-run.e2e.0yFT9cvu.log`). The desktop Grid footer wheel
+case passed (`/tmp/kandev-run.e2e.QoSuw02p.log`). Changed-file ESLint and Prettier
+passed. This is a test helper correction; production behavior, public docs
+and screenshots are unchanged. Fresh published-head CI is required.
