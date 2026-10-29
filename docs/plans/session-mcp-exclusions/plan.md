@@ -1038,3 +1038,43 @@ with retries disabled (`/tmp/kandev-run.e2e.5HHH6XQU.log` and
 normal hooks and Prettier. Public feature docs and screenshots remain accurate.
 Fresh published-head CI/review remains required; prior-head progress is
 historical and is tracked externally.
+
+
+### Current-head browser audit and Settings recovery, 2026-10-29
+
+The full 118-report browser audit for `d7b7dc4ab` found four retry signals:
+workspace creation lost its new card, a phone profile drag overshot its target,
+Send Now did not render its selected message in time, and the phone oversized
+message response selector matched both the prompt and response. No assertion
+or timeout was relaxed.
+
+A deferred Settings bootstrap regression reproduced the workspace loss and
+rename rollback before the fix (`/tmp/exclusions-workspace-red.log`). Bootstrap
+now refreshes its snapshot if the workspace list changed while loading, then
+applies the result only while mounted. This preserves the existing active-
+workspace revision behavior. Ten focused bootstrap/state tests and typecheck
+passed. This restores existing workspace behavior; public instructions, MCP
+contracts and screenshots do not change.
+
+The profile trace showed an edge-adjacent drag auto-scrolling its target away.
+Three isolated runs did not reproduce it. A temporary 30-animation-frame
+finger hold reproduced the same overshoot without retries
+(`/tmp/kandev-run.e2e.xQtG1AV8.log`); centering the source before sampling drag
+coordinates passed that controlled case (`/tmp/kandev-run.e2e.V3b6Mtap.log`).
+The probe was removed. The permanent fixture still verifies real touch input,
+44px handles, saved/reopened order and scrolling outside the handle. The
+oversized-message assertion now matches the exact assistant response instead
+of also matching the scripted prompt. No product drag behavior changed.
+
+Send Now passed three fresh isolated runs with retries disabled
+(`/tmp/kandev-run.e2e.TYeysNBR.log`). Its cause is not established. The exact five-test predecessor sequence also
+passed (`/tmp/kandev-run.e2e.1CeQ4bCi.log`). With affinity restricted to four
+CPUs, that sequence and Settings workspace creation passed without retries
+(`/tmp/kandev-run.e2e.6WaKHfPI.log`, six cases). No speculative queue change
+was made.
+
+On a fresh managed build, both changed phone cases passed without retries
+(`/tmp/kandev-run.e2e.pMSp2t3M.log`). Focused unit tests, full typecheck, i18n,
+changed-file ESLint/Prettier and docs/spec validation passed. The preceding
+CI run completed successfully, but its full artifact audit and retry summary
+retain the four historical retry signals; fresh-head CI remains required.
