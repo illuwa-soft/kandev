@@ -1,5 +1,5 @@
 ---
-status: draft
+status: current
 system: plugins
 requirements:
   - REQ-PLUGINS-AUTOMATION-READS-001
@@ -9,7 +9,8 @@ requirements:
 
 ## Purpose and boundaries
 
-This is a proposed additive Host read extension, not implemented behavior.
+This additive Host read extension is implemented in source; its release and
+stable-backport verification remain separate delivery results.
 The Host projects existing automation service data into stable public DTOs.
 The extension owns authorization, projection, pagination, and capability
 discovery. It does not own automation execution or any consumer's business logic.
@@ -34,7 +35,7 @@ All entries refer to `AC-PLUGINS-AUTOMATION-READS-001`.
 ## Components and responsibilities
 
 - `pluginsdk/proto/kandev/plugin/v1/plugin.proto`: additive read RPCs and DTOs.
-- `pluginsdk`: optional Go reader extension and gRPC adapters. Proposed helper:
+- `pluginsdk`: optional Go reader extension and gRPC adapters. Helper:
   `AutomationHistory(host)`, returning a reader or an unsupported result.
 - `apps/backend/internal/plugins`: capability checks, exact workspace scope,
   bounded read snapshots, DTO mapping, and read-method discovery.
@@ -42,9 +43,10 @@ All entries refer to `AC-PLUGINS-AUTOMATION-READS-001`.
   run reads. Reuse its run paging and retry identity; do not query its store from
   a plugin or introduce a connector-specific branch in this package.
 
-Proposed reader operations are `ListAutomations`, `ListRuns`, and `GetRun`.
-Final wire names must be checked for collisions before implementation. These
-names in a draft do not establish a shipped SDK contract.
+Reader operations are `ListAutomations`, `ListRuns`, and `GetRun`. Their additive
+wire methods are `ListAutomationDefinitionsExact`, `ListAutomationRunsExact`, and
+`GetAutomationRunExact`. Source implementation does not establish a published
+SDK release or a compatible installed Host.
 
 ## Public observations
 

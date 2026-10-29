@@ -1,7 +1,7 @@
 ---
 id: "01-read-contract"
 title: "Add authorized automation history reads"
-status: pending
+status: completed
 wave: 1
 depends_on: []
 plan: "plan.md"
@@ -79,4 +79,20 @@ sequential
 
 ## Results
 
-Pending.
+- Added the optional public reader, additive protobuf messages/RPCs, generated
+  adapters, workspace authorization, capability discovery, and live service wiring.
+- Reused immutable exact-query snapshots and the automation service's paged reads.
+  Exact run refresh now shares list-time status and exact-turn summary projection.
+- RED observed for unavailable Host methods, missing discovery entries, and a raw
+  `task_created` result where the source projection required `archived`.
+- Passed `go -C pluginsdk test -trimpath -race ./...` and the full affected backend
+  package tests with `KANDEV_PLUGIN_FIXTURE_TEST_LOOPBACK=1` and `-trimpath -race`.
+  Without that existing fixture setting, the unmodified baseline and candidate
+  both time out on the host's selected VPN address. No test was disabled.
+- PostgreSQL parity coverage is present and environment-gated; no PostgreSQL DSN
+  was supplied for this local run.
+- Changed-package golangci-lint v2.9.0 passed with Go 1.26.0, `-trimpath`, four
+  workers, and a 15-minute cold-cache deadline. The installed Go 1.27 export format
+  is newer than that pinned linter's importer supports.
+- `git diff --check` passed. No source write, automation dispatch, or vendor call
+  was added to this Host extension.

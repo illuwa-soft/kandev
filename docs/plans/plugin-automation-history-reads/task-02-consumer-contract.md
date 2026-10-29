@@ -1,7 +1,7 @@
 ---
 id: "02-consumer-contract"
 title: "Document and prove the optional consumer contract"
-status: pending
+status: completed
 wave: 2
 depends_on: ["01-read-contract"]
 plan: "plan.md"
@@ -68,4 +68,12 @@ sequential
 
 ## Results
 
-Pending.
+- Updated the public authoring/manifest references and the wire contract with
+  implemented method names, grant requirements, snapshot bounds, and old-Host errors.
+- Added a separately compiled consumer executable under SDK testdata. Its packaged
+  go-plugin handshake exercised the real Host reader and preserved paging mismatch,
+  revoked-grant, and unsupported-Host outcomes without a private transport fallback.
+- SDK race tests and `TestAutomationHistoryIndependentConsumer` passed.
+- Both public-doc validators, documentation catalog validation, full specification
+  lint, and `git diff --check` passed.
+- No public SDK version or Host release mapping was published or inferred.

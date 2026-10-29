@@ -159,6 +159,7 @@ type Service struct {
 	taskWriter            taskWriter
 	workspaceAdminWriter  WorkspaceAdminWriter
 	sourceIssueController SourceIssueController
+	automationHistory     automationHistorySource
 
 	// Utility agent invocation dependencies, wired via SetUtilityAgent.
 	utilityDefaultProfile utilityDefaultProfileSource

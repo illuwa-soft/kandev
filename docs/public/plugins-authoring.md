@@ -1036,6 +1036,7 @@ subscription vocabulary and wildcard rules are in the
 | Managed conversations      | `ExactHost.ManagedAgentConversations()`                                                                                          | `api_read` and/or `api_write: managed_agent_conversations`, plus matching Host v2 workspace grant                                                 | Installation-owned hidden conversations with revisioned launch settings, pause state, retained lifecycle, and durable mutation receipts                                                                                                                                                   |
 | Managed conversation input | `EnqueueInput`, `GetInput`, `ListInputs`, `CancelInput`, `Dispatch`                                                              | Reads use `api_read: managed_agent_conversations`; writes use `api_write: managed_agent_conversations`, plus the matching Host v2 workspace grant | Durable FIFO receipts, bounded sequence reads, exact active cancellation, and immediate dispatch whose `busy` result never queues                                                                                                                                                         |
 | Managed conversation schedules | `HostManagedConversationSchedules(host)`: `List`, `Create`, `Update`, `SetEnabled`, `Delete`                              | Reads require `api_read: automations` plus `host.v2.read:automations`; writes require `api_write: automations` plus `host.v2.write:automations` | Installation-owned schedules use revisioned commands and durable receipts; delivery reauthorizes the retained destination and retries by occurrence ID                                                                                                                                   |
+| Automation history        | `AutomationHistory(host)`: `ListAutomations`, `ListRuns`, `GetRun` | `api_read: automations` plus active `host.v2.read:automations` workspace grant | Optional read-only extension. Lists use immutable bounded snapshots; exact run refresh preserves current outcomes, retry identity, and absent task/session/turn bindings. |
 | Sessions                   | Sessions().List, Sessions().CodeStats                                                                                            | api_read: sessions                                                                                                                                | Typed session and computed code-stat records                                                                                                                                                                                                                                              |
 | Workspaces                 | Workspaces().List                                                                                                                | api_read: workspaces                                                                                                                              | Instance-visible workspaces                                                                                                                                                                                                                                                               |
 | Workflows                  | Workflows().List, Workflows().ListSteps                                                                                          | api_read: workflows                                                                                                                               | List steps by workflow id                                                                                                                                                                                                                                                                 |
@@ -1054,6 +1055,51 @@ The Go signatures, filters, DTOs, and pagination types live in
 pluginsdk/host.go and data_types.go. api_write task/message
 methods are implemented in the current branch; do not repeat older docs that
 call them reserved.
+
+### Read automation execution history
+
+Use the optional `pluginsdk.AutomationHistory(host)` reader for reporting or
+reconciliation. Check `GetCapabilityContext` for support and authorization of
+`ListAutomationDefinitionsExact`, `ListAutomationRunsExact`, and
+`GetAutomationRunExact` in the selected workspace. An older Host returns
+`Unimplemented`; a Go interface assertion alone does not establish RPC support.
+
+```go
+reader, ok := pluginsdk.AutomationHistory(host)
+if !ok {
+    return errors.New("automation history is unsupported")
+}
+query := pluginsdk.AutomationHistoryQuery{
+    RequestID: "history-reconcile", WorkspaceID: workspaceID,
+    Page: pluginsdk.ExactReadPage{Limit: 100},
+}
+for {
+    page, err := reader.ListRuns(ctx, query)
+    if err != nil {
+        return err
+    }
+    for _, run := range page.Items {
+        // Observe the original status; a triggered or skipped run is not success.
+        _ = run
+    }
+    if !page.PageInfo.HasMore {
+        break
+    }
+    query.Page.Cursor = page.PageInfo.NextCursor
+    query.Page.SnapshotVersion = page.PageInfo.SnapshotVersion
+}
+```
+
+`AutomationID` optionally narrows either list. Pages are at most 200 rows;
+snapshots expire after five minutes and are limited to 5,000 rows and 8 MiB.
+Expired snapshots require a fresh query. A grant is rechecked on every page.
+Errors never mean an empty or complete inventory.
+
+Refresh known runs with `GetRun(ctx, pluginsdk.AutomationRunLookup{...})`, including
+runs created before collection began. Its resource version identifies the safe
+projection, and `ObservedAt` is separate from source creation time. No completion
+timestamp is invented. DTOs omit prompts, webhook credentials, raw trigger
+payloads, and internal claim data. The reader never schedules or retries work.
 
 ### Build an independent coordination policy
 
