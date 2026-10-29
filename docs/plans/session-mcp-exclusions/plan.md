@@ -1078,3 +1078,23 @@ On a fresh managed build, both changed phone cases passed without retries
 changed-file ESLint/Prettier and docs/spec validation passed. The preceding
 CI run completed successfully, but its full artifact audit and retry summary
 retain the four historical retry signals; fresh-head CI remains required.
+
+
+### Runtime-update request observation, 2026-10-29
+
+The `83c1ff0b3` browser artifact audit exposed a mobile runtime-update fixture
+asserting its POST count synchronously after a tap. A temporary 250ms request-
+admission delay reproduced the exact expected-one/actual-zero failure with
+retries disabled (`/tmp/kandev-run.e2e.OxXsifV8.log`). Waiting for the existing
+fixture count passed that same probe (`/tmp/kandev-run.e2e.Ja3ceBNl.log`).
+The probe was removed; the permanent change is one `expect.poll` assertion.
+The count remains exactly one and the target-version assertion is unchanged.
+All six cases in the phone runtime-update spec then passed without retries
+(`/tmp/kandev-run.e2e.mKYftEsW.log`), as did changed-file ESLint and Prettier.
+No production, timeout, public documentation or screenshot change is needed.
+
+The same audit contained a folder-picker-open timeout in the Local scratch
+source flow. Three fresh isolated runs passed (`/tmp/kandev-run.e2e.VBMRWuQ4.log`),
+then all four source-flow cases passed in predecessor order with four-CPU
+affinity (`/tmp/kandev-run.e2e.OVYtLlFh.log`), all with retries disabled. No
+root cause was established and no speculative picker change was made.
