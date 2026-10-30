@@ -28,11 +28,11 @@ func (p *consumer) HandleWebhook(ctx context.Context, request *pluginsdk.Webhook
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	}
-	var query pluginsdk.AutomationHistoryQuery
+	var query pluginsdk.AutomationRunQuery
 	if err := json.Unmarshal(request.Body, &query); err != nil {
 		return &pluginsdk.WebhookResponse{Status: 400}, nil
 	}
-	reader, ok := pluginsdk.AutomationHistory(p.Host())
+	reader, ok := pluginsdk.HostAutomationHistory(p.Host())
 	if !ok {
 		return &pluginsdk.WebhookResponse{Status: 501}, nil
 	}

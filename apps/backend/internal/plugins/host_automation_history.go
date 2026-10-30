@@ -2,286 +2,258 @@ package plugins
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
-	"sort"
 	"time"
 
-	"github.com/kandev/kandev/internal/automation"
 	"github.com/kandev/kandev/pkg/pluginsdk"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 const (
-	exactReadListAutomationDefinitions = "ListAutomationDefinitionsExact"
-	exactReadListAutomationRuns        = "ListAutomationRunsExact"
-	exactReadGetAutomationRun          = "GetAutomationRunExact"
-	automationHistoryCapability        = "host.v2.read:automations"
-	automationHistoryUnavailable       = "automation_history_unavailable"
+	automationHistoryListDefinitionsMethod = "ListAutomationDefinitionsExact"
+	automationHistoryListRunsMethod        = "ListAutomationRunsExact"
+	automationHistoryGetRunMethod          = "GetAutomationRunExact"
+	automationHistoryCapability            = "host.v2.read:automations"
+	// automationHistorySourceLimit is the shared snapshot row bound plus one,
+	// so an oversized filtered result is detected before a partial page is
+	// returned as complete.
+	automationHistorySourceLimit = exactSnapshotMaxRows + 1
 )
 
-type automationHistorySource interface {
-	ListAutomations(context.Context, string) ([]*automation.Automation, error)
-	GetAutomation(context.Context, string) (*automation.Automation, error)
-	ListRunPage(context.Context, string, string, int) (*automation.AutomationRunsPage, error)
-	GetRunObservation(context.Context, string) (*automation.AutomationRun, error)
+type pluginHostAutomationHistory struct{ host *pluginHost }
+
+type normalizedAutomationHistoryFilter struct {
+	automationID  string
+	createdFrom   *time.Time
+	createdBefore *time.Time
 }
 
-// SetAutomationHistorySource connects read-only automation data to existing and future plugin Hosts.
-func (s *Service) SetAutomationHistorySource(source automationHistorySource) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.automationHistory = source
+type automationHistoryFilterDigest struct {
+	AutomationID  string `json:"automation_id,omitempty"`
+	CreatedFrom   string `json:"created_from,omitempty"`
+	CreatedBefore string `json:"created_before,omitempty"`
 }
 
 func (h *pluginHost) AutomationHistory() pluginsdk.AutomationHistoryReader {
-	return automationHistoryReader{host: h}
+	return pluginHostAutomationHistory{host: h}
 }
 
-type automationHistoryReader struct{ host *pluginHost }
-
-func (r automationHistoryReader) ListAutomations(ctx context.Context, q pluginsdk.AutomationHistoryQuery) (pluginsdk.AutomationDefinitionPage, error) {
-	return r.host.ListAutomationDefinitions(ctx, q)
-}
-
-func (r automationHistoryReader) ListRuns(ctx context.Context, q pluginsdk.AutomationHistoryQuery) (pluginsdk.AutomationRunPage, error) {
-	return r.host.ListAutomationRuns(ctx, q)
-}
-
-func (r automationHistoryReader) GetRun(ctx context.Context, q pluginsdk.AutomationRunLookup) (pluginsdk.AutomationRunObservation, pluginsdk.HostReadReceipt, error) {
-	return r.host.GetAutomationRun(ctx, q)
-}
-
-func (h *pluginHost) automationHistorySource() automationHistorySource {
-	if h.service == nil {
-		return nil
+func (h *pluginHost) automationHistoryDataSource() (AutomationHistoryDataSource, error) {
+	if h.automationHistoryDataDep == nil {
+		return nil, status.Error(codes.Unavailable, "automation history source is unavailable")
 	}
-	h.service.mu.Lock()
-	defer h.service.mu.Unlock()
-	return h.service.automationHistory
-}
-
-func (h *pluginHost) ListAutomationDefinitions(ctx context.Context, q pluginsdk.AutomationHistoryQuery) (pluginsdk.AutomationDefinitionPage, error) {
-	identity, unlock, err := h.exactReadAdmission(ctx, q.RequestID, q.WorkspaceID, exactReadListAutomationDefinitions, automationHistoryCapability, q.AutomationID)
-	if err != nil {
-		return pluginsdk.AutomationDefinitionPage{}, err
-	}
-	defer unlock()
-	source := h.automationHistorySource()
+	source := h.automationHistoryDataDep()
 	if source == nil {
-		return pluginsdk.AutomationDefinitionPage{}, status.Error(codes.Unavailable, automationHistoryUnavailable)
+		return nil, status.Error(codes.Unavailable, "automation history source is unavailable")
 	}
-	items, info, err := exactPage(h, identity, q.RequestID, q.Page, func() ([]pluginsdk.AutomationDefinition, error) {
-		models, err := readAutomationDefinitions(ctx, source, q)
-		if err != nil {
-			return nil, err
-		}
-		out := make([]pluginsdk.AutomationDefinition, len(models))
-		observed := time.Now().UTC().Format(time.RFC3339Nano)
-		for i, model := range models {
-			out[i], err = automationDefinitionObservation(model, observed)
+	return source, nil
+}
+
+func (r pluginHostAutomationHistory) ListAutomations(ctx context.Context, q pluginsdk.AutomationDefinitionQuery) (pluginsdk.AutomationDefinitionPage, error) {
+	items, info, err := listAutomationHistoryPage(ctx, r.host, q.RequestID, q.WorkspaceID,
+		automationHistoryListDefinitionsMethod, q.Filter.AutomationID, q.Filter.CreatedFrom, q.Filter.CreatedBefore, q.Page,
+		func(ctx context.Context, source AutomationHistoryDataSource, filter normalizedAutomationHistoryFilter) ([]pluginsdk.AutomationDefinitionObservation, bool, error) {
+			result, err := source.ListAutomationHistoryDefinitions(ctx, q.WorkspaceID, filter.automationID,
+				filter.createdFrom, filter.createdBefore, automationHistorySourceLimit)
 			if err != nil {
-				return nil, err
+				return nil, false, err
 			}
-		}
-		return out, nil
-	})
+			return automationDefinitionObservations(result.Items), result.Overflow, nil
+		})
 	return pluginsdk.AutomationDefinitionPage{Items: items, PageInfo: info}, err
 }
 
-func (h *pluginHost) ListAutomationRuns(ctx context.Context, q pluginsdk.AutomationHistoryQuery) (pluginsdk.AutomationRunPage, error) {
-	identity, unlock, err := h.exactReadAdmission(ctx, q.RequestID, q.WorkspaceID, exactReadListAutomationRuns, automationHistoryCapability, q.AutomationID)
-	if err != nil {
-		return pluginsdk.AutomationRunPage{}, err
-	}
-	defer unlock()
-	source := h.automationHistorySource()
-	if source == nil {
-		return pluginsdk.AutomationRunPage{}, status.Error(codes.Unavailable, automationHistoryUnavailable)
-	}
-	items, info, err := exactPage(h, identity, q.RequestID, q.Page, func() ([]pluginsdk.AutomationRunObservation, error) {
-		models, err := readAutomationDefinitions(ctx, source, q)
-		if err != nil {
-			return nil, err
-		}
-		return readAutomationRuns(ctx, source, q.WorkspaceID, models)
-	})
+func (r pluginHostAutomationHistory) ListRuns(ctx context.Context, q pluginsdk.AutomationRunQuery) (pluginsdk.AutomationRunPage, error) {
+	items, info, err := listAutomationHistoryPage(ctx, r.host, q.RequestID, q.WorkspaceID,
+		automationHistoryListRunsMethod, q.Filter.AutomationID, q.Filter.CreatedFrom, q.Filter.CreatedBefore, q.Page,
+		func(ctx context.Context, source AutomationHistoryDataSource, filter normalizedAutomationHistoryFilter) ([]pluginsdk.AutomationRunObservation, bool, error) {
+			result, err := source.ListAutomationHistoryRuns(ctx, q.WorkspaceID, filter.automationID,
+				filter.createdFrom, filter.createdBefore, automationHistorySourceLimit)
+			if err != nil {
+				return nil, false, err
+			}
+			return automationRunObservations(result.Items), result.Overflow, nil
+		})
 	return pluginsdk.AutomationRunPage{Items: items, PageInfo: info}, err
 }
 
-func (h *pluginHost) GetAutomationRun(ctx context.Context, q pluginsdk.AutomationRunLookup) (pluginsdk.AutomationRunObservation, pluginsdk.HostReadReceipt, error) {
-	identity, unlock, err := h.exactReadAdmission(ctx, q.RequestID, q.WorkspaceID, exactReadGetAutomationRun, automationHistoryCapability, q.RunID)
+func listAutomationHistoryPage[T any](
+	ctx context.Context,
+	host *pluginHost,
+	requestID, workspaceID, method, automationID string,
+	createdFrom, createdBefore *string,
+	page pluginsdk.ExactReadPage,
+	load func(context.Context, AutomationHistoryDataSource, normalizedAutomationHistoryFilter) ([]T, bool, error),
+) ([]T, pluginsdk.ExactReadPageInfo, error) {
+	filter, err := normalizeAutomationHistoryFilter(automationID, createdFrom, createdBefore)
+	if err != nil {
+		return nil, pluginsdk.ExactReadPageInfo{}, err
+	}
+	identity, unlock, err := host.exactReadAdmission(ctx, requestID, workspaceID, method,
+		automationHistoryCapability, filter.digest())
+	if err != nil {
+		return nil, pluginsdk.ExactReadPageInfo{}, err
+	}
+	defer unlock()
+	source, err := host.automationHistoryDataSource()
+	if err != nil {
+		return nil, pluginsdk.ExactReadPageInfo{}, err
+	}
+	return exactPage(host, identity, requestID, page, func() ([]T, error) {
+		items, overflow, err := load(ctx, source, filter)
+		if err != nil {
+			return nil, automationHistorySourceError(err)
+		}
+		if overflow {
+			return nil, automationHistoryExhaustedError()
+		}
+		return items, nil
+	})
+}
+
+func (r pluginHostAutomationHistory) GetRun(ctx context.Context, q pluginsdk.AutomationRunGetQuery) (pluginsdk.AutomationRunObservation, pluginsdk.HostReadReceipt, error) {
+	if !isBoundedApprovalIdentifier(q.RunID) {
+		return pluginsdk.AutomationRunObservation{}, pluginsdk.HostReadReceipt{}, status.Error(codes.InvalidArgument, "run_id is required")
+	}
+	identity, unlock, err := r.host.exactReadAdmission(ctx, q.RequestID, q.WorkspaceID,
+		automationHistoryGetRunMethod, automationHistoryCapability, map[string]string{"run_id": q.RunID})
 	if err != nil {
 		return pluginsdk.AutomationRunObservation{}, pluginsdk.HostReadReceipt{}, err
 	}
 	defer unlock()
-	if !isBoundedApprovalIdentifier(q.RunID) {
-		return pluginsdk.AutomationRunObservation{}, pluginsdk.HostReadReceipt{}, status.Error(codes.InvalidArgument, "run_id is required and bounded")
-	}
-	source := h.automationHistorySource()
-	if source == nil {
-		return pluginsdk.AutomationRunObservation{}, pluginsdk.HostReadReceipt{}, status.Error(codes.Unavailable, automationHistoryUnavailable)
-	}
-	run, err := source.GetRunObservation(ctx, q.RunID)
+	source, err := r.host.automationHistoryDataSource()
 	if err != nil {
-		return pluginsdk.AutomationRunObservation{}, pluginsdk.HostReadReceipt{}, automationHistoryReadError(err)
+		return pluginsdk.AutomationRunObservation{}, pluginsdk.HostReadReceipt{}, err
 	}
-	if run == nil || run.ID != q.RunID {
-		return pluginsdk.AutomationRunObservation{}, pluginsdk.HostReadReceipt{}, status.Error(codes.NotFound, "automation run was not found")
-	}
-	definition, err := source.GetAutomation(ctx, run.AutomationID)
+	item, err := source.GetAutomationHistoryRun(ctx, q.WorkspaceID, q.RunID)
 	if err != nil {
-		return pluginsdk.AutomationRunObservation{}, pluginsdk.HostReadReceipt{}, automationHistoryReadError(err)
+		return pluginsdk.AutomationRunObservation{}, pluginsdk.HostReadReceipt{}, automationHistorySourceError(err)
 	}
-	if definition == nil || definition.WorkspaceID != q.WorkspaceID || definition.ID != run.AutomationID {
-		return pluginsdk.AutomationRunObservation{}, pluginsdk.HostReadReceipt{}, status.Error(codes.NotFound, "automation run was not found")
-	}
-	receipt := singleReadReceipt(identity, q.RequestID)
-	return automationRunObservation(run, q.WorkspaceID, receipt.ObservedAt), receipt, nil
+	return automationRunObservation(item, time.Now().UTC().Format(time.RFC3339Nano)), singleReadReceipt(identity, q.RequestID), nil
 }
 
-func readAutomationDefinitions(ctx context.Context, source automationHistorySource, q pluginsdk.AutomationHistoryQuery) ([]*automation.Automation, error) {
-	if q.AutomationID != "" && !isBoundedApprovalIdentifier(q.AutomationID) {
-		return nil, status.Error(codes.InvalidArgument, "automation_id must be bounded")
+func normalizeAutomationHistoryFilter(automationID string, createdFrom, createdBefore *string) (normalizedAutomationHistoryFilter, error) {
+	filter := normalizedAutomationHistoryFilter{automationID: automationID}
+	if automationID != "" && !isBoundedApprovalIdentifier(automationID) {
+		return filter, status.Error(codes.InvalidArgument, "automation_id is invalid")
 	}
-	models, err := source.ListAutomations(ctx, q.WorkspaceID)
-	if err != nil {
-		return nil, automationHistoryReadError(err)
-	}
-	out := make([]*automation.Automation, 0, len(models))
-	for _, model := range models {
-		if model == nil {
-			return nil, status.Error(codes.Unavailable, "automation projection is incomplete")
-		}
-		if model.WorkspaceID == q.WorkspaceID && (q.AutomationID == "" || model.ID == q.AutomationID) {
-			out = append(out, model)
-		}
-	}
-	if q.AutomationID != "" && len(out) == 0 {
-		return nil, status.Error(codes.NotFound, "automation was not found")
-	}
-	if len(out) > exactSnapshotMaxRows {
-		return nil, status.Error(codes.ResourceExhausted, "automation snapshot exceeds its bounded size")
-	}
-	sort.Slice(out, func(i, j int) bool {
-		if out[i].CreatedAt.Equal(out[j].CreatedAt) {
-			return out[i].ID < out[j].ID
-		}
-		return out[i].CreatedAt.After(out[j].CreatedAt)
-	})
-	return out, nil
-}
-
-func readAutomationRuns(ctx context.Context, source automationHistorySource, workspaceID string, definitions []*automation.Automation) ([]pluginsdk.AutomationRunObservation, error) {
-	models := make([]*automation.AutomationRun, 0)
-	for _, definition := range definitions {
-		runs, err := readAutomationRunPages(ctx, source, definition.ID, exactSnapshotMaxRows-len(models))
+	if createdFrom != nil {
+		parsed, err := time.Parse(time.RFC3339Nano, *createdFrom)
 		if err != nil {
-			return nil, err
+			return filter, status.Error(codes.InvalidArgument, "created_from is not a valid RFC3339 timestamp")
 		}
-		models = append(models, runs...)
+		utc := parsed.UTC()
+		filter.createdFrom = &utc
 	}
-	sort.Slice(models, func(i, j int) bool {
-		if models[i].CreatedAt.Equal(models[j].CreatedAt) {
-			return models[i].ID < models[j].ID
-		}
-		return models[i].CreatedAt.After(models[j].CreatedAt)
-	})
-	out := make([]pluginsdk.AutomationRunObservation, len(models))
-	observed := time.Now().UTC().Format(time.RFC3339Nano)
-	for i, model := range models {
-		out[i] = automationRunObservation(model, workspaceID, observed)
-	}
-	return out, nil
-}
-
-func readAutomationRunPages(ctx context.Context, source automationHistorySource, automationID string, remaining int) ([]*automation.AutomationRun, error) {
-	out := make([]*automation.AutomationRun, 0)
-	seen := make(map[string]bool)
-	cursor := ""
-	for {
-		if err := ctx.Err(); err != nil {
-			return nil, status.FromContextError(err).Err()
-		}
-		page, err := source.ListRunPage(ctx, automationID, cursor, 200)
+	if createdBefore != nil {
+		parsed, err := time.Parse(time.RFC3339Nano, *createdBefore)
 		if err != nil {
-			return nil, automationHistoryReadError(err)
+			return filter, status.Error(codes.InvalidArgument, "created_before is not a valid RFC3339 timestamp")
 		}
-		if page == nil {
-			return nil, status.Error(codes.Unavailable, "automation run projection is incomplete")
-		}
-		for _, run := range page.Items {
-			if run == nil || run.AutomationID != automationID {
-				return nil, status.Error(codes.Unavailable, "automation run projection is incomplete")
-			}
-			out = append(out, run)
-		}
-		if len(out) > remaining {
-			return nil, status.Error(codes.ResourceExhausted, "automation run snapshot exceeds its bounded size")
-		}
-		if page.NextCursor == "" {
-			return out, nil
-		}
-		if seen[page.NextCursor] || len(page.Items) == 0 {
-			return nil, status.Error(codes.Unavailable, "automation run paging did not advance")
-		}
-		seen[page.NextCursor] = true
-		cursor = page.NextCursor
+		utc := parsed.UTC()
+		filter.createdBefore = &utc
 	}
+	if filter.createdFrom != nil && filter.createdBefore != nil && !filter.createdFrom.Before(*filter.createdBefore) {
+		return filter, status.Error(codes.InvalidArgument, "created_from must be before created_before")
+	}
+	return filter, nil
 }
 
-func automationDefinitionObservation(model *automation.Automation, observed string) (pluginsdk.AutomationDefinition, error) {
-	item := pluginsdk.AutomationDefinition{
-		ID: model.ID, WorkspaceID: model.WorkspaceID, Name: model.Name, Enabled: model.Enabled,
-		AgentProfileID: model.AgentProfileID, ExecutorProfileID: model.ExecutorProfileID,
-		CreatedAt: automationSourceTime(model.CreatedAt), UpdatedAt: automationSourceTime(model.UpdatedAt),
-		Schedules: make([]pluginsdk.AutomationSchedule, 0, len(model.Triggers)),
+func (f normalizedAutomationHistoryFilter) digest() automationHistoryFilterDigest {
+	digest := automationHistoryFilterDigest{AutomationID: f.automationID}
+	if f.createdFrom != nil {
+		digest.CreatedFrom = f.createdFrom.Format(time.RFC3339Nano)
 	}
-	for _, trigger := range model.Triggers {
-		schedule := pluginsdk.AutomationSchedule{TriggerID: trigger.ID, TriggerType: string(trigger.Type), Enabled: trigger.Enabled}
-		if trigger.Type == automation.TriggerTypeScheduled {
-			var config automation.ScheduledTriggerConfig
-			if err := json.Unmarshal(trigger.Config, &config); err != nil {
-				return pluginsdk.AutomationDefinition{}, status.Error(codes.Unavailable, "automation schedule projection is invalid")
-			}
-			schedule.Expression, schedule.Timezone = config.CronExpression, config.Timezone
+	if f.createdBefore != nil {
+		digest.CreatedBefore = f.createdBefore.Format(time.RFC3339Nano)
+	}
+	return digest
+}
+
+func automationHistorySourceError(err error) error {
+	if errors.Is(err, ErrAutomationHistoryNotFound) {
+		return status.Error(codes.NotFound, "automation history target was not found")
+	}
+	if status.Code(err) != codes.Unknown {
+		return err
+	}
+	return status.Error(codes.Unavailable, "automation history source is unavailable")
+}
+
+func automationHistoryExhaustedError() error {
+	return status.Error(codes.ResourceExhausted, "automation history snapshot exceeds its bounded size")
+}
+
+func automationDefinitionObservations(items []AutomationHistoryDefinition) []pluginsdk.AutomationDefinitionObservation {
+	observedAt := time.Now().UTC().Format(time.RFC3339Nano)
+	observations := make([]pluginsdk.AutomationDefinitionObservation, 0, len(items))
+	for _, item := range items {
+		observations = append(observations, automationDefinitionObservation(item, observedAt))
+	}
+	return observations
+}
+
+func automationRunObservations(items []AutomationHistoryRun) []pluginsdk.AutomationRunObservation {
+	observedAt := time.Now().UTC().Format(time.RFC3339Nano)
+	observations := make([]pluginsdk.AutomationRunObservation, 0, len(items))
+	for _, item := range items {
+		observations = append(observations, automationRunObservation(item, observedAt))
+	}
+	return observations
+}
+
+func automationDefinitionObservation(item AutomationHistoryDefinition, observedAt string) pluginsdk.AutomationDefinitionObservation {
+	observation := pluginsdk.AutomationDefinitionObservation{
+		ID: item.ID, WorkspaceID: item.WorkspaceID, Name: item.Name, Enabled: item.Enabled,
+		CreatedAt:  item.CreatedAt.UTC().Format(time.RFC3339Nano),
+		UpdatedAt:  item.UpdatedAt.UTC().Format(time.RFC3339Nano),
+		ObservedAt: observedAt,
+		Triggers:   make([]pluginsdk.AutomationTriggerObservation, 0, len(item.Triggers)),
+	}
+	for _, trigger := range item.Triggers {
+		wire := pluginsdk.AutomationTriggerObservation{
+			ID: trigger.ID, Kind: trigger.Kind, Enabled: trigger.Enabled,
+			CronExpression: trigger.CronExpression, ScheduleAvailable: trigger.ScheduleAvailable,
 		}
-		item.Schedules = append(item.Schedules, schedule)
+		if trigger.Timezone != "" {
+			timezone := trigger.Timezone
+			wire.Timezone = &timezone
+		}
+		observation.Triggers = append(observation.Triggers, wire)
 	}
-	sort.Slice(item.Schedules, func(i, j int) bool { return item.Schedules[i].TriggerID < item.Schedules[j].TriggerID })
-	item.ResourceVersion = exactFilterDigest(item)
-	item.ObservedAt = observed
-	return item, nil
+	observation.ResourceVersion = item.ResourceVersion
+	if observation.ResourceVersion == "" {
+		observation.ResourceVersion = digestPublicValue(observation)
+	}
+	return observation
 }
 
-func automationRunObservation(model *automation.AutomationRun, workspaceID, observed string) pluginsdk.AutomationRunObservation {
-	item := pluginsdk.AutomationRunObservation{
-		ID: model.ID, WorkspaceID: workspaceID, AutomationID: model.AutomationID,
-		TriggerID: model.TriggerID, TriggerType: string(model.TriggerType),
-		TaskID: model.TaskID, SessionID: model.SessionID, TurnID: model.TurnID,
-		Status: string(model.Status), Summary: model.Summary, ErrorMessage: model.ErrorMessage,
-		RetryGroupID: model.RetryGroupID, RetryParentRunID: model.RetryParentRunID, AttemptNumber: model.AttemptNumber,
-		CreatedAt: automationSourceTime(model.CreatedAt),
+func automationRunObservation(item AutomationHistoryRun, observedAt string) pluginsdk.AutomationRunObservation {
+	observation := pluginsdk.AutomationRunObservation{
+		ID: item.ID, WorkspaceID: item.WorkspaceID, AutomationID: item.AutomationID,
+		AutomationName: item.AutomationName, TriggerID: item.TriggerID, TriggerKind: item.TriggerKind,
+		TaskID: item.TaskID, SessionID: item.SessionID, TurnID: item.TurnID,
+		ManagedConversationID: item.ManagedConversationID,
+		SourceStatus:          item.SourceStatus, Status: item.Status,
+		RetryState: item.RetryState, DeliveryStatus: item.DeliveryStatus,
+		RetryGroupID: item.RetryGroupID, RetryParentRunID: item.RetryParentRunID,
+		AttemptNumber: item.AttemptNumber,
+		CreatedAt:     item.CreatedAt.UTC().Format(time.RFC3339Nano),
+		Summary:       item.Summary, ErrorExcerpt: item.ErrorExcerpt,
+		ObservedAt: observedAt,
 	}
-	item.ResourceVersion = exactFilterDigest(item)
-	item.ObservedAt = observed
-	return item
-}
-
-func automationSourceTime(value time.Time) string {
-	if value.IsZero() {
-		return ""
+	if item.RetryScheduledAt != nil {
+		formatted := item.RetryScheduledAt.UTC().Format(time.RFC3339Nano)
+		observation.RetryScheduledAt = &formatted
 	}
-	return value.UTC().Format(time.RFC3339Nano)
-}
-
-func automationHistoryReadError(err error) error {
-	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
-		return status.FromContextError(err).Err()
+	if item.RetryClaimedAt != nil {
+		formatted := item.RetryClaimedAt.UTC().Format(time.RFC3339Nano)
+		observation.RetryClaimedAt = &formatted
 	}
-	if errors.Is(err, automation.ErrAutomationNotFound) {
-		return status.Error(codes.NotFound, "automation run was not found")
+	observation.ResourceVersion = item.ResourceVersion
+	if observation.ResourceVersion == "" {
+		observation.ResourceVersion = digestPublicValue(observation)
 	}
-	return status.Error(codes.Unavailable, "automation history read failed")
+	return observation
 }
