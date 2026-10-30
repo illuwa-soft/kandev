@@ -414,12 +414,6 @@ func exactExecutionRequiresCommandStore(method string) bool {
 }
 
 func exactReadUnavailableReason(method string, host *pluginHost) string {
-	switch method {
-	case exactReadListAutomationDefinitions, exactReadListAutomationRuns, exactReadGetAutomationRun:
-		if host.automationHistorySource() == nil {
-			return automationHistoryUnavailable
-		}
-	}
 	if reason := exactReadSpecificUnavailableReason(method, host); reason != "" {
 		return reason
 	}
@@ -470,6 +464,10 @@ func exactReadSpecificUnavailableReason(method string, host *pluginHost) string 
 		if _, ok := host.taskData.(exactTaskObservationSource); !ok {
 			return "task_usage_data_unavailable"
 		}
+	case automationHistoryListDefinitionsMethod, automationHistoryListRunsMethod, automationHistoryGetRunMethod:
+		if host.automationHistoryDataDep == nil || host.automationHistoryDataDep() == nil {
+			return "automation_history_data_unavailable"
+		}
 	}
 	return ""
 }
@@ -481,7 +479,6 @@ var exactReadTaskDataMethods = map[string]struct{}{
 	exactReadListTaskRelations: {}, exactReadGetTaskRelations: {}, exactReadListTaskInbox: {},
 	exactReadGetTaskDirective: {}, exactReadListTaskDirectives: {}, exactReadListTaskTransitions: {},
 	exactReadChangeEvidence: {}, exactReadTaskUsage: {},
-	exactReadListAutomationDefinitions: {}, exactReadListAutomationRuns: {}, exactReadGetAutomationRun: {},
 }
 
 //nolint:nestif // The operation capability check preserves the full authorization decision order.

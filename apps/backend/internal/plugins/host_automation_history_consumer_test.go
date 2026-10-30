@@ -24,7 +24,11 @@ func TestAutomationHistoryIndependentConsumer(t *testing.T) {
 	output, err := exec.CommandContext(ctx, "go", "build", "-trimpath", "-o", binary,
 		"github.com/kandev/kandev/pkg/pluginsdk/testdata/automation-history-consumer").CombinedOutput()
 	require.NoError(t, err, string(output))
-	h, _, _ := automationReadFixture(t)
+	source := &fakeAutomationHistorySource{runs: []AutomationHistoryRun{
+		historyRunFixture("run-one", "succeeded", "succeeded"),
+		historyRunFixture("run-two", "skipped", "skipped"),
+	}}
+	h := newAutomationHistoryHost(t, source, []string{automationHistoryCapability})
 	start := func(host pluginsdk.Host) *pluginsdk.RemotePlugin {
 		client := hcplugin.NewClient(&hcplugin.ClientConfig{
 			HandshakeConfig:  pluginsdk.Handshake,
@@ -40,7 +44,7 @@ func TestAutomationHistoryIndependentConsumer(t *testing.T) {
 		return raw.(*pluginsdk.RemotePlugin)
 	}
 	remote := start(h)
-	query := pluginsdk.AutomationHistoryQuery{RequestID: "consumer", WorkspaceID: "workspace-one", Page: pluginsdk.ExactReadPage{Limit: 1}}
+	query := pluginsdk.AutomationRunQuery{RequestID: "consumer", WorkspaceID: "workspace-one", Page: pluginsdk.ExactReadPage{Limit: 1}}
 	read := func(plugin *pluginsdk.RemotePlugin) *pluginsdk.WebhookResponse {
 		body, err := json.Marshal(query)
 		require.NoError(t, err)
@@ -55,9 +59,9 @@ func TestAutomationHistoryIndependentConsumer(t *testing.T) {
 	require.Len(t, page.Items, 1)
 	require.True(t, page.PageInfo.HasMore)
 	query.Page.Cursor, query.Page.SnapshotVersion = page.PageInfo.NextCursor, page.PageInfo.SnapshotVersion
-	query.AutomationID = "changed-filter"
+	query.Filter.AutomationID = "changed-filter"
 	require.Equal(t, int32(409), read(remote).Status)
-	query.AutomationID = ""
+	query.Filter.AutomationID = ""
 	_, err = h.service.approvalRevoke(h.installationID, query.WorkspaceID, "human", "revoke", "consumer-revoke")
 	require.NoError(t, err)
 	require.Equal(t, int32(403), read(remote).Status)

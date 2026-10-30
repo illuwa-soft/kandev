@@ -253,9 +253,9 @@ service Host {
   rpc CancelClarification(CancelClarificationRequest) returns (CancelClarificationResponse);
 
   // Optional workspace-scoped, read-only automation history extension.
-  rpc ListAutomationDefinitionsExact(AutomationHistoryQuery) returns (AutomationDefinitionPage);
-  rpc ListAutomationRunsExact(AutomationHistoryQuery) returns (AutomationRunPage);
-  rpc GetAutomationRunExact(AutomationRunLookup) returns (AutomationRunResult);
+  rpc ListAutomationDefinitionsExact(ListAutomationDefinitionsExactRequest) returns (ListAutomationDefinitionsExactResponse);
+  rpc ListAutomationRunsExact(ListAutomationRunsExactRequest) returns (ListAutomationRunsExactResponse);
+  rpc GetAutomationRunExact(GetAutomationRunExactRequest) returns (GetAutomationRunExactResponse);
 }
 
 enum HostCommandStatus {
@@ -2660,72 +2660,87 @@ message ListChangeRequestEvidenceExactResponse { repeated ChangeRequestEvidence 
 message ListTaskUsageExactRequest { string request_id = 1; string workspace_id = 2; repeated string task_ids = 3; ExactReadPage page = 4; }
 message ListTaskUsageExactResponse { repeated TaskUsageObservation items = 1; ExactReadPageInfo page_info = 2; }
 
-message AutomationHistoryQuery {
-  string request_id = 1;
-  string workspace_id = 2;
-  string automation_id = 3;
-  ExactReadPage page = 4;
+message AutomationDefinitionFilter {
+  string automation_id = 1;
+  optional string created_from = 2;
+  optional string created_before = 3;
 }
-
-message AutomationRunLookup {
-  string request_id = 1;
-  string workspace_id = 2;
-  string run_id = 3;
+message AutomationTriggerObservation {
+  string id = 1;
+  string kind = 2;
+  bool enabled = 3;
+  string cron_expression = 4;
+  optional string timezone = 5;
+  bool schedule_available = 6;
 }
-
-message AutomationSchedule {
-  string trigger_id = 1;
-  string trigger_type = 2;
-  string expression = 3;
-  string timezone = 4;
-  bool enabled = 5;
-}
-
-message AutomationDefinition {
+message AutomationDefinitionObservation {
   string id = 1;
   string workspace_id = 2;
   string name = 3;
   bool enabled = 4;
-  string agent_profile_id = 5;
-  string executor_profile_id = 6;
-  string created_at = 7;
-  string updated_at = 8;
-  repeated AutomationSchedule schedules = 9;
-  string resource_version = 10;
-  string observed_at = 11;
+  string created_at = 5;
+  string updated_at = 6;
+  string resource_version = 7;
+  string observed_at = 8;
+  repeated AutomationTriggerObservation triggers = 9;
 }
-
+message ListAutomationDefinitionsExactRequest {
+  string request_id = 1;
+  string workspace_id = 2;
+  AutomationDefinitionFilter filter = 3;
+  ExactReadPage page = 4;
+}
+message ListAutomationDefinitionsExactResponse {
+  repeated AutomationDefinitionObservation items = 1;
+  ExactReadPageInfo page_info = 2;
+}
+message AutomationRunFilter {
+  string automation_id = 1;
+  optional string created_from = 2;
+  optional string created_before = 3;
+}
 message AutomationRunObservation {
   string id = 1;
   string workspace_id = 2;
   string automation_id = 3;
-  string trigger_id = 4;
-  string trigger_type = 5;
-  string task_id = 6;
-  string session_id = 7;
-  string turn_id = 8;
-  string status = 9;
-  string summary = 10;
-  string error_message = 11;
-  string retry_group_id = 12;
-  string retry_parent_run_id = 13;
-  int64 attempt_number = 14;
-  string created_at = 15;
-  string resource_version = 16;
-  string observed_at = 17;
+  string automation_name = 4;
+  string trigger_id = 5;
+  string trigger_kind = 6;
+  string task_id = 7;
+  string session_id = 8;
+  string turn_id = 9;
+  string managed_conversation_id = 10;
+  string source_status = 11;
+  string status = 12;
+  string retry_state = 13;
+  string delivery_status = 14;
+  string retry_group_id = 15;
+  string retry_parent_run_id = 16;
+  optional int64 attempt_number = 17;
+  string created_at = 18;
+  optional string retry_scheduled_at = 19;
+  optional string retry_claimed_at = 20;
+  string summary = 21;
+  string error_excerpt = 22;
+  string resource_version = 23;
+  string observed_at = 24;
 }
-
-message AutomationDefinitionPage {
-  repeated AutomationDefinition items = 1;
-  ExactReadPageInfo page_info = 2;
+message ListAutomationRunsExactRequest {
+  string request_id = 1;
+  string workspace_id = 2;
+  AutomationRunFilter filter = 3;
+  ExactReadPage page = 4;
 }
-
-message AutomationRunPage {
+message ListAutomationRunsExactResponse {
   repeated AutomationRunObservation items = 1;
   ExactReadPageInfo page_info = 2;
 }
-
-message AutomationRunResult {
+message GetAutomationRunExactRequest {
+  string request_id = 1;
+  string workspace_id = 2;
+  string run_id = 3;
+}
+message GetAutomationRunExactResponse {
   AutomationRunObservation item = 1;
   HostReadReceipt receipt = 2;
 }

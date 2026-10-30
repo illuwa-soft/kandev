@@ -1072,9 +1072,9 @@ type HostClient interface {
 	AnswerClarification(ctx context.Context, in *AnswerClarificationRequest, opts ...grpc.CallOption) (*AnswerClarificationResponse, error)
 	CancelClarification(ctx context.Context, in *CancelClarificationRequest, opts ...grpc.CallOption) (*CancelClarificationResponse, error)
 	// Optional workspace-scoped, read-only automation history extension.
-	ListAutomationDefinitionsExact(ctx context.Context, in *AutomationHistoryQuery, opts ...grpc.CallOption) (*AutomationDefinitionPage, error)
-	ListAutomationRunsExact(ctx context.Context, in *AutomationHistoryQuery, opts ...grpc.CallOption) (*AutomationRunPage, error)
-	GetAutomationRunExact(ctx context.Context, in *AutomationRunLookup, opts ...grpc.CallOption) (*AutomationRunResult, error)
+	ListAutomationDefinitionsExact(ctx context.Context, in *ListAutomationDefinitionsExactRequest, opts ...grpc.CallOption) (*ListAutomationDefinitionsExactResponse, error)
+	ListAutomationRunsExact(ctx context.Context, in *ListAutomationRunsExactRequest, opts ...grpc.CallOption) (*ListAutomationRunsExactResponse, error)
+	GetAutomationRunExact(ctx context.Context, in *GetAutomationRunExactRequest, opts ...grpc.CallOption) (*GetAutomationRunExactResponse, error)
 }
 
 type hostClient struct {
@@ -2124,9 +2124,9 @@ func (c *hostClient) CancelClarification(ctx context.Context, in *CancelClarific
 	return out, nil
 }
 
-func (c *hostClient) ListAutomationDefinitionsExact(ctx context.Context, in *AutomationHistoryQuery, opts ...grpc.CallOption) (*AutomationDefinitionPage, error) {
+func (c *hostClient) ListAutomationDefinitionsExact(ctx context.Context, in *ListAutomationDefinitionsExactRequest, opts ...grpc.CallOption) (*ListAutomationDefinitionsExactResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(AutomationDefinitionPage)
+	out := new(ListAutomationDefinitionsExactResponse)
 	err := c.cc.Invoke(ctx, Host_ListAutomationDefinitionsExact_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -2134,9 +2134,9 @@ func (c *hostClient) ListAutomationDefinitionsExact(ctx context.Context, in *Aut
 	return out, nil
 }
 
-func (c *hostClient) ListAutomationRunsExact(ctx context.Context, in *AutomationHistoryQuery, opts ...grpc.CallOption) (*AutomationRunPage, error) {
+func (c *hostClient) ListAutomationRunsExact(ctx context.Context, in *ListAutomationRunsExactRequest, opts ...grpc.CallOption) (*ListAutomationRunsExactResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(AutomationRunPage)
+	out := new(ListAutomationRunsExactResponse)
 	err := c.cc.Invoke(ctx, Host_ListAutomationRunsExact_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -2144,9 +2144,9 @@ func (c *hostClient) ListAutomationRunsExact(ctx context.Context, in *Automation
 	return out, nil
 }
 
-func (c *hostClient) GetAutomationRunExact(ctx context.Context, in *AutomationRunLookup, opts ...grpc.CallOption) (*AutomationRunResult, error) {
+func (c *hostClient) GetAutomationRunExact(ctx context.Context, in *GetAutomationRunExactRequest, opts ...grpc.CallOption) (*GetAutomationRunExactResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(AutomationRunResult)
+	out := new(GetAutomationRunExactResponse)
 	err := c.cc.Invoke(ctx, Host_GetAutomationRunExact_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -2357,9 +2357,9 @@ type HostServer interface {
 	AnswerClarification(context.Context, *AnswerClarificationRequest) (*AnswerClarificationResponse, error)
 	CancelClarification(context.Context, *CancelClarificationRequest) (*CancelClarificationResponse, error)
 	// Optional workspace-scoped, read-only automation history extension.
-	ListAutomationDefinitionsExact(context.Context, *AutomationHistoryQuery) (*AutomationDefinitionPage, error)
-	ListAutomationRunsExact(context.Context, *AutomationHistoryQuery) (*AutomationRunPage, error)
-	GetAutomationRunExact(context.Context, *AutomationRunLookup) (*AutomationRunResult, error)
+	ListAutomationDefinitionsExact(context.Context, *ListAutomationDefinitionsExactRequest) (*ListAutomationDefinitionsExactResponse, error)
+	ListAutomationRunsExact(context.Context, *ListAutomationRunsExactRequest) (*ListAutomationRunsExactResponse, error)
+	GetAutomationRunExact(context.Context, *GetAutomationRunExactRequest) (*GetAutomationRunExactResponse, error)
 	mustEmbedUnimplementedHostServer()
 }
 
@@ -2679,13 +2679,13 @@ func (UnimplementedHostServer) AnswerClarification(context.Context, *AnswerClari
 func (UnimplementedHostServer) CancelClarification(context.Context, *CancelClarificationRequest) (*CancelClarificationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CancelClarification not implemented")
 }
-func (UnimplementedHostServer) ListAutomationDefinitionsExact(context.Context, *AutomationHistoryQuery) (*AutomationDefinitionPage, error) {
+func (UnimplementedHostServer) ListAutomationDefinitionsExact(context.Context, *ListAutomationDefinitionsExactRequest) (*ListAutomationDefinitionsExactResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListAutomationDefinitionsExact not implemented")
 }
-func (UnimplementedHostServer) ListAutomationRunsExact(context.Context, *AutomationHistoryQuery) (*AutomationRunPage, error) {
+func (UnimplementedHostServer) ListAutomationRunsExact(context.Context, *ListAutomationRunsExactRequest) (*ListAutomationRunsExactResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListAutomationRunsExact not implemented")
 }
-func (UnimplementedHostServer) GetAutomationRunExact(context.Context, *AutomationRunLookup) (*AutomationRunResult, error) {
+func (UnimplementedHostServer) GetAutomationRunExact(context.Context, *GetAutomationRunExactRequest) (*GetAutomationRunExactResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAutomationRunExact not implemented")
 }
 func (UnimplementedHostServer) mustEmbedUnimplementedHostServer() {}
@@ -4557,7 +4557,7 @@ func _Host_CancelClarification_Handler(srv interface{}, ctx context.Context, dec
 }
 
 func _Host_ListAutomationDefinitionsExact_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AutomationHistoryQuery)
+	in := new(ListAutomationDefinitionsExactRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -4569,13 +4569,13 @@ func _Host_ListAutomationDefinitionsExact_Handler(srv interface{}, ctx context.C
 		FullMethod: Host_ListAutomationDefinitionsExact_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(HostServer).ListAutomationDefinitionsExact(ctx, req.(*AutomationHistoryQuery))
+		return srv.(HostServer).ListAutomationDefinitionsExact(ctx, req.(*ListAutomationDefinitionsExactRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _Host_ListAutomationRunsExact_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AutomationHistoryQuery)
+	in := new(ListAutomationRunsExactRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -4587,13 +4587,13 @@ func _Host_ListAutomationRunsExact_Handler(srv interface{}, ctx context.Context,
 		FullMethod: Host_ListAutomationRunsExact_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(HostServer).ListAutomationRunsExact(ctx, req.(*AutomationHistoryQuery))
+		return srv.(HostServer).ListAutomationRunsExact(ctx, req.(*ListAutomationRunsExactRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _Host_GetAutomationRunExact_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AutomationRunLookup)
+	in := new(GetAutomationRunExactRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -4605,7 +4605,7 @@ func _Host_GetAutomationRunExact_Handler(srv interface{}, ctx context.Context, d
 		FullMethod: Host_GetAutomationRunExact_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(HostServer).GetAutomationRunExact(ctx, req.(*AutomationRunLookup))
+		return srv.(HostServer).GetAutomationRunExact(ctx, req.(*GetAutomationRunExactRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

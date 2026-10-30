@@ -101,4 +101,37 @@ sequential
   the final source commit. No production runtime was replaced by this work order.
 - Public documentation/catalog/spec validation and `git diff --check v0.98.0`
   passed. `git diff --exit-code v0.98.0 -- apps/web apps/packages` confirmed the
-  original frontend and shared-package source was retained.
+   original frontend and shared-package source was retained.
+
+## Merged upstream contract adoption (2026-10-30 UTC)
+
+The preceding results describe the original private backport. Its replacement
+uses the contract merged in [upstream PR #4960](https://github.com/kdlbs/kandev/pull/4960)
+at `838043071d99ae3e9df22fd6ef8efa161ea01c73`, starting from the installed
+`65adb3f3a153d56bcf8cc1040772eeeb30b851c7` compatibility branch.
+
+- Copied the merged source queries, safe adapter, optional reader, and tests.
+  Adapted only the stable backend-owned SDK/protobuf imports and wiring.
+  Replaced the private DTOs and RPC messages with the upstream contract.
+- Rebuilt the unchanged `v0.98.0` frontend with Node 24.15.0 and pnpm 9.15.9,
+  synchronized embedded assets, and built a candidate reporting
+  `0.98.0+upstream-automation-history.1`.
+- Passed the complete SDK, plugin, and automation race suites; the focused
+  `^TestPluginAutomationHistory` backend adapter tests; Go vet for those four
+  packages; independent public-SDK consumer tests; and docs/spec validation.
+  The full backendapp suite timed out after 900 seconds and is not claimed as
+  passed. PostgreSQL history coverage remains environment-gated and was skipped.
+- Installed plugin `0.4.1`, compiled against the published upstream pseudo-version,
+  in a disposable Host. The real provider confirmed six operations across five
+  documents. Unapproved reads were denied; an in-flight operation survived restart
+  with its original identity; task/definition/run changes made while the plugin
+  was disabled were recovered after Host restart; two complete reconciliations
+  added no identities; and another restart preserved the binding and run recall.
+- The native desktop/phone browser smoke passed four checks against the packaged
+  plugin. Provider document read-back confirmed task, definition, and failed-run
+  provenance. Zero extracted facts for a definition is valid; semantic recall
+  was asserted against an actual failed run, not an invented execution outcome.
+- Removed all 18 provider documents created during the successful run and its
+  setup iterations, and read back their absence. Private fixtures and receipts
+  remain outside source commits. These are isolated verification results, not an
+  operational deployment receipt or an official stable release.
