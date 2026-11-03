@@ -144,5 +144,9 @@ Editor/API/hook integration and public documentation implemented. Shared Save,
 restore/delete and later-edit tests pass; Node 24 typecheck/i18n and scoped
 ESLint pass. One managed real-backend Chromium test and one native Pixel-5
 mobile-chrome test pass. Public-doc validator tests (63) and 54 published pages
-pass. Final stale-preview/control checks, PR delivery and operational receipt
-remain to be recorded; full all-project E2E was not executed.
+pass. Final stale-preview/control checks pass (20 mounted tests total), and
+[PR #5](https://github.com/illuwa-soft/kandev/pull/5) is open. The exact production
+artifact passed isolated desktop/phone tests and the rollout receipt confirms
+operational CRUD/preview/fallback with no test sends. Full all-project E2E and
+the complete broad repository gate remain unverified as recorded in the plan;
+this work order stays in progress for that validation remainder.

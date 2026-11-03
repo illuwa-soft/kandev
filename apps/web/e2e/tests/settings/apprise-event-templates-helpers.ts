@@ -37,7 +37,7 @@ export async function appriseTemplateScenario(page: Page, api: ApiClient, info: 
       "Answer: Example task",
     );
     await info.attach("synthetic-template-preview", {
-      body: await editor.screenshot(),
+      body: await page.screenshot(),
       contentType: "image/png",
     });
     const save = page.getByRole("button", { name: /^(Save changes|Retry save)$/ });

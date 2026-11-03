@@ -40,5 +40,39 @@ not evidence that notification-template tests or deployment already passed.
 
 ## Results
 
-Baseline preservation completed. Feature PR, production artifact, backup drill,
-transition and post-restart smoke: pending. This is not a deployment receipt.
+Completed and independently read back on 2026-11-03 at 10:08:40 UTC:
+
+- Feature PR: [Illuwa #5](https://github.com/illuwa-soft/kandev/pull/5), open and
+  not merged. Runtime source: `15495808e383c0af926a617b54cd8b2adacd9db3`.
+- Running version: `0.98.0+upstream-history.apprise-templates.1`, verified through
+  local health, readiness and the existing public endpoint.
+- Installed native SHA-256:
+  `29e8d41280b010a918511a7114586695416bae630fd804e98fe4cb84c3b4ebb6`.
+- Production Node 24.15.0 web bundle embedded in a Go 1.26.0/fts5 native build,
+  with explicit version/commit/time and `-buildvcs=false`. Existing helper
+  binaries retained; no plugin or automation-history code was replaced.
+- The exact candidate binary also passed isolated managed Chromium and Pixel-5
+  scenarios, one each. Reviewed synthetic viewport captures are in
+  `docs/screenshots/apprise-templates-{desktop,mobile}.png`.
+- Private SQLite native backup and independent restored copy passed integrity
+  checks and exact snapshot/restored-file hash comparison. The initial live
+  copy timed out before operational mutation; pinning a WAL read snapshot
+  allowed a bounded consistent copy while background writes continued.
+- A separate session-independent worker changed only the existing launcher's
+  bundle/version target and public-origin environment value, then signalled
+  the verified launchd-owned PID. KeepAlive restarted the existing service.
+- An owned temporary disabled provider proved catalog availability, template
+  create/read/update/delete, synthetic preview and missing-session whole-pair
+  fallback. The temporary provider was deleted. Test sends: **0**.
+- Existing provider configuration, plugin installation/version/status inventory,
+  feature flags, key/configuration files and service definition matched their
+  pre-transition hashes. No live database rollback or plugin-history rewind.
+- The old bundle and launcher are retained. Private receipt and restore artifacts:
+  `~/.kandev/backups/apprise-templates-20261103/`. No credentials or raw receiver
+  configuration are included in this public record.
+
+`deployed/mac` points to the exact runtime source. `production/mac` retains the
+pre-feature baseline so PR #5 remains reviewable. Follow-up screenshot/test and
+receipt-only commits do not change the deployed product binary. Upstream proposal
+[#5011](https://github.com/kdlbs/kandev/issues/5011) receives this fork validation
+as evidence, not as a claim of upstream acceptance or six-event delivery.

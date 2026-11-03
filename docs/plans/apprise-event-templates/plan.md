@@ -200,7 +200,10 @@ Final control/fuzz/stale-preview cases passed: the two mounted web suites now
 contain 20 passing tests; the final Go 1.26 notification/config/weburl race run
 passes. A three-second, two-worker fuzz run completed 12,759 executions without
 exceeding rendering bounds. Production remains pending until the independent
-rollout receipt confirms health and smoke results.
+rollout receipt confirms health and smoke results. That receipt now confirms
+completion at 2026-11-03 10:08:40 UTC; see [operational evidence](deployment.md#results).
+PR #5 is open; full-suite/time-budget and live PostgreSQL limitations above
+remain explicit, so this delivery record does not claim all repository gates passed.
 
 Design checks on 2026-11-03:
 
