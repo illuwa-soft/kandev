@@ -88,13 +88,13 @@ func (r *recordingAutomationHistoryReader) ListRuns(_ context.Context, q Automat
 func (r *recordingAutomationHistoryReader) GetRun(_ context.Context, q AutomationRunGetQuery) (AutomationRunObservation, HostReadReceipt, error) {
 	r.getQuery = q
 	return AutomationRunObservation{
-		ID: q.RunID, WorkspaceID: q.WorkspaceID, AutomationID: "automation-1",
-		SourceStatus: "task_created", Status: "cancelled", CreatedAt: "2026-10-01T00:00:00Z",
-		ResourceVersion: "fresh-version", ObservedAt: "2026-10-04T00:00:00Z",
-	}, HostReadReceipt{
-		InstallationID: "installation-1", WorkspaceID: q.WorkspaceID,
-		CapabilityRevision: 7, RequestID: q.RequestID, SnapshotVersion: "receipt-version",
-	}, nil
+			ID: q.RunID, WorkspaceID: q.WorkspaceID, AutomationID: "automation-1",
+			SourceStatus: "task_created", Status: "cancelled", CreatedAt: "2026-10-01T00:00:00Z",
+			ResourceVersion: "fresh-version", ObservedAt: "2026-10-04T00:00:00Z",
+		}, HostReadReceipt{
+			InstallationID: "installation-1", WorkspaceID: q.WorkspaceID,
+			CapabilityRevision: 7, RequestID: q.RequestID, SnapshotVersion: "receipt-version",
+		}, nil
 }
 
 func TestAutomationHistoryRoundTrip(t *testing.T) {
