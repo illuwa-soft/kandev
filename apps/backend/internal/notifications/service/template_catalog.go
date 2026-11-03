@@ -93,7 +93,7 @@ func samplePayload(event, sample string) notificationPayload {
 	if event == EventSystemUpdateAvailable {
 		p.Payload = map[string]string{"version": "1.2.3", "url": "https://example.invalid/releases/1.2.3"}
 		p.Title, p.Body = semanticMessageCopy(event, "1.2.3")
-		for _, status := range []string{"available", "succeeded", "failed", "interrupted"} {
+		for _, status := range []string{updateStatusAvailable, "succeeded", "failed", "interrupted"} {
 			if sample == "runtime_"+status {
 				p.Payload = map[string]string{"agent_name": "example-agent", "display_name": "Example Agent", "runtime_id": "example-runtime", "previous_version": "1.0.0", "version": "1.2.3", "runtime_update_status": status}
 				p.Title, p.Body = runtimeUpdateMessage(p.Payload)

@@ -9,6 +9,8 @@ import (
 	taskmodels "github.com/kandev/kandev/internal/task/models"
 )
 
+const updateStatusAvailable = "available"
+
 type templateSessionReader interface {
 	GetTaskSession(context.Context, string) (*taskmodels.TaskSession, error)
 }
@@ -54,7 +56,7 @@ func (s *Service) taskTemplateValues(ctx context.Context, p notificationPayload,
 
 func updateTemplateValues(v map[string]string, p notificationPayload, origin string) {
 	if len(p.RuntimeUpdates) > 1 {
-		v["update.kind"], v["update.status"] = "agent_runtime_summary", "available"
+		v["update.kind"], v["update.status"] = "agent_runtime_summary", updateStatusAvailable
 		v["update.count"] = strconv.Itoa(len(p.RuntimeUpdates))
 		v["event.url"] = templates.Destination(origin, "/settings/agents#runtime-updates")
 		return
