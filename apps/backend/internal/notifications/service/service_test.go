@@ -15,6 +15,7 @@ import (
 )
 
 type notificationTestRepository struct {
+	templateRepositoryStub
 	mu            sync.Mutex
 	providers     []*models.Provider
 	subscriptions map[string][]*models.Subscription

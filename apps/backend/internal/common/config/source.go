@@ -65,6 +65,7 @@ type configSelection struct {
 // AutomaticEnv during Unmarshal: legacy invalid environment values must retain
 // their fallback behavior instead of turning into typed-config startup errors.
 var yamlOnlyStartupKeys = map[string]struct{}{
+	"notifications.publicBaseUrl":              {},
 	"server.trustedProxies":                    {},
 	"tasks.preparationTimeout":                 {},
 	"tasks.stallDetectionThreshold":            {},
@@ -348,6 +349,7 @@ func applyStartupDefaults(cfg *Config, yamlKeys map[string]bool, profileDefaults
 }
 
 func applyStartupEnvironment(cfg *Config, envSnapshot map[string]string, sources map[string]SettingSource) {
+	applyStringEnvAllowEmpty("notifications.publicBaseUrl", &cfg.Notifications.PublicBaseURL, envSnapshot, sources)
 	applyTrustedProxiesEnv(cfg, envSnapshot, sources)
 	applyDurationEnv("tasks.preparationTimeout", &cfg.Tasks.PreparationTimeout, 10*time.Minute, envSnapshot, sources)
 	applyDurationEnv("tasks.stallDetectionThreshold", &cfg.Tasks.StallDetectionThreshold, 2*time.Hour, envSnapshot, sources)

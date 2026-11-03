@@ -81,6 +81,7 @@ type auditedStartupEnvironment struct {
 // consumer and every reviewed exclusion.
 func auditedStartupEnvironmentInventory() []auditedStartupEnvironment {
 	return []auditedStartupEnvironment{
+		{envVar: "KANDEV_NOTIFICATIONS_PUBLIC_BASE_URL", class: "catalog"},
 		{envVar: "KANDEV_HOME_DIR", class: "catalog"},
 		{envVar: "KANDEV_SERVER_HOST", class: "catalog"},
 		{envVar: "KANDEV_SERVER_PORT", class: "catalog"},
