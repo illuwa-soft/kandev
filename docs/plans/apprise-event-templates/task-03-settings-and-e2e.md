@@ -1,7 +1,7 @@
 ---
 id: "03-settings-and-e2e"
 title: "Settings editor, documentation and E2E"
-status: in_progress
+status: done
 wave: 3
 depends_on:
   - 02-persistence-and-delivery
@@ -145,8 +145,11 @@ restore/delete and later-edit tests pass; Node 24 typecheck/i18n and scoped
 ESLint pass. One managed real-backend Chromium test and one native Pixel-5
 mobile-chrome test pass. Public-doc validator tests (63) and 54 published pages
 pass. Final stale-preview/control checks pass (20 mounted tests total), and
-[PR #5](https://github.com/illuwa-soft/kandev/pull/5) is open. The exact production
+[PR #5](https://github.com/illuwa-soft/kandev/pull/5) carries the delivery. The exact production
 artifact passed isolated desktop/phone tests and the rollout receipt confirms
-operational CRUD/preview/fallback with no test sends. Full all-project E2E and
-the complete broad repository gate remain unverified as recorded in the plan;
-this work order stays in progress for that validation remainder.
+operational CRUD/preview/fallback with no test sends. Full frontend and backend
+CI and the complete E2E workflow (28 regular shards, six container shards,
+Kubernetes compatibility and desktop smoke) subsequently passed at
+`fb0c6cc8dff687ff10a65cddfd66060851d6ab9b`. CLI, script constituent suites and
+full harness/specification/architecture lint also passed; see
+[completion evidence and environment qualifications](plan.md#full-validation-completion).

@@ -42,8 +42,8 @@ not evidence that notification-template tests or deployment already passed.
 
 Completed and independently read back on 2026-11-03 at 10:08:40 UTC:
 
-- Feature PR: [Illuwa #5](https://github.com/illuwa-soft/kandev/pull/5), open and
-  not merged. Runtime source: `15495808e383c0af926a617b54cd8b2adacd9db3`.
+- Feature PR: [Illuwa #5](https://github.com/illuwa-soft/kandev/pull/5), open at
+  rollout time. Runtime source: `15495808e383c0af926a617b54cd8b2adacd9db3`.
 - Running version: `0.98.0+upstream-history.apprise-templates.1`, verified through
   local health, readiness and the existing public endpoint.
 - Installed native SHA-256:
@@ -71,8 +71,12 @@ Completed and independently read back on 2026-11-03 at 10:08:40 UTC:
   `~/.kandev/backups/apprise-templates-20261103/`. No credentials or raw receiver
   configuration are included in this public record.
 
-`deployed/mac` points to the exact runtime source. `production/mac` retains the
-pre-feature baseline so PR #5 remains reviewable. Follow-up screenshot/test and
-receipt-only commits do not change the deployed product binary. Upstream proposal
+`deployed/mac` points to the exact runtime source. At PR creation, `production/mac`
+retained the pre-feature baseline; merging PR #5 advances that integration branch.
+The old source remains identified by the baseline commit above. Follow-up
+screenshot/test/receipt changes, Go 1.26 test formatting and an equivalent
+`available` string-constant extraction do not install a new binary. Full CI and
+real PostgreSQL completion evidence is recorded in
+[the plan](plan.md#full-validation-completion). Upstream proposal
 [#5011](https://github.com/kdlbs/kandev/issues/5011) receives this fork validation
 as evidence, not as a claim of upstream acceptance or six-event delivery.

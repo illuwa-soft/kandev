@@ -111,6 +111,9 @@ ownership/type within each SQL transaction, not just at an earlier API read.
 Implemented owned revisioned CRUD, synthetic preview, schema/upgrade metadata,
 Apprise-only dispatch and safe CLI diagnostics. Go 1.26.0 notifications/config
 race tests, SQL guard and store conformance/explicit-tag replay pass. SQLite
-file reopen and snapshot restore preserve JSON and revision. Live PostgreSQL
-coverage is env-gated and was skipped without a disposable test DSN. The full
-repository suite attempt timed out; no full-suite pass is claimed.
+file reopen and snapshot restore preserve JSON and revision. Subsequent real
+disposable PostgreSQL 16 notification-store and complete store-conformance race
+suites passed. Full backend CI, including PostgreSQL 16/18 and Windows gates,
+passed at `fb0c6cc8dff687ff10a65cddfd66060851d6ab9b`; see the
+[completion evidence](plan.md#full-validation-completion). This supersedes the
+initial unavailable-DSN and local broad-suite time-budget gaps.

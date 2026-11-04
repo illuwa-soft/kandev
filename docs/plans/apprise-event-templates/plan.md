@@ -1,6 +1,6 @@
 ---
 created: 2026-11-03
-status: in_progress
+status: done
 requirements:
   - REQ-PLATFORM-APPRISE-TEMPLATES-001
   - REQ-PLATFORM-APPRISE-TEMPLATES-002
@@ -161,9 +161,9 @@ disposable fixtures; no receiver credentials or live notifications.
 
 ## Work orders
 
-- [ ] [Task 01: Bounded catalog, renderer and URL contract](task-01-renderer-and-urls.md)
-- [ ] [Task 02: Owned persistent APIs and Apprise delivery](task-02-persistence-and-delivery.md)
-- [ ] [Task 03: Settings editor, documentation and E2E](task-03-settings-and-e2e.md)
+- [x] [Task 01: Bounded catalog, renderer and URL contract](task-01-renderer-and-urls.md)
+- [x] [Task 02: Owned persistent APIs and Apprise delivery](task-02-persistence-and-delivery.md)
+- [x] [Task 03: Settings editor, documentation and E2E](task-03-settings-and-e2e.md)
 
 All three execute sequentially; no subagents or persistent worker tasks are authorized.
 
@@ -202,8 +202,42 @@ passes. A three-second, two-worker fuzz run completed 12,759 executions without
 exceeding rendering bounds. Production remains pending until the independent
 rollout receipt confirms health and smoke results. That receipt now confirms
 completion at 2026-11-03 10:08:40 UTC; see [operational evidence](deployment.md#results).
-PR #5 is open; full-suite/time-budget and live PostgreSQL limitations above
-remain explicit, so this delivery record does not claim all repository gates passed.
+The initial time-budget and unavailable-DSN limits above describe the first local
+attempt. The following completion evidence supersedes those coverage gaps.
+
+### Full validation completion
+
+All three dispatched workflows completed successfully at source
+`fb0c6cc8dff687ff10a65cddfd66060851d6ab9b`:
+
+- [Backend Tests](https://github.com/illuwa-soft/kandev/actions/runs/41739763589):
+  static checks including full incremental lint, four test shards, three repository
+  cohorts, ambient-environment tests, PostgreSQL 16/18, Windows and resource gates.
+- [Frontend Tests](https://github.com/illuwa-soft/kandev/actions/runs/41739769610):
+  both test shards and full frontend lint/build.
+- [E2E Tests](https://github.com/illuwa-soft/kandev/actions/runs/41739774983):
+  28 regular and six container shards, Kubernetes v1.34.8/v1.36.1 compatibility,
+  desktop smoke, report merge and final evidence gate. The final workflow verdict
+  is success; transient artifact-download annotations are not test failures.
+- Real disposable PostgreSQL 16 notification-store and complete store-conformance
+  suites passed with `-trimpath -tags fts5 -race -count=1`; the latter completed in
+  379.791 seconds. The loopback-only test container was separate from production.
+- CLI tests passed (five). Every `test-scripts` constituent was executed: the
+  shell/release suites through updater-signature verification passed in isolated
+  Linux with Node 24.15.0, GNU Make 4.4.1 and Rust 1.97.1; desktop startup tests
+  passed on Mac after building the startup surface; remaining release-workflow,
+  npm and public-doc suites passed in Linux. This is split-environment coverage,
+  not a claim that one local `make test` invocation completed. Initial Mac shell
+  deadline and old Make/Bash failures, missing toolchain dependencies and a
+  missing startup build were resolved by selecting/building the required environment.
+- Full harness, specification and architecture lint passed locally.
+
+CI remediation was limited to Go 1.26 fixture indentation and naming the existing
+`available` string as a constant. All notification service race tests passed
+again. The installed artifact remains pinned to `15495808e...`; these follow-ups
+do not represent a new deployment. Final evidence-only documentation edits are
+validated separately. PR [#5](https://github.com/illuwa-soft/kandev/pull/5) records
+the merge disposition; `deployed/mac` continues to identify the installed source.
 
 Design checks on 2026-11-03:
 
