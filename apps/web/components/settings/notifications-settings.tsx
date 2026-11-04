@@ -19,6 +19,8 @@ import {
 } from "@/components/settings/notifications-settings-actions";
 import { ExternalProvidersSection } from "@/components/settings/notifications-settings-external-providers";
 import { SettingsGroup } from "@/components/settings/settings-group";
+import { AppriseTemplateEditor } from "@/components/settings/apprise-template-editor";
+import type { NotificationProvider } from "@/lib/types/http";
 import { GENERAL_SETTINGS_TARGETS } from "@/lib/settings-discovery/catalog/preferences";
 
 function useTableData(state: NotificationsState) {
@@ -75,6 +77,20 @@ function useNotificationPageSaveState(state: NotificationsState, soundIsDirty: b
     invalidReason: canSave ? undefined : t("settings:appriseUrlRequired"),
     revision,
   };
+}
+
+function AppriseTemplateEditors({
+  saved,
+  drafts,
+}: {
+  saved: NotificationProvider[];
+  drafts: NotificationProvider[];
+}) {
+  return saved
+    .filter(
+      (provider) => provider.type === "apprise" && drafts.some((draft) => draft.id === provider.id),
+    )
+    .map((provider) => <AppriseTemplateEditor key={provider.id} provider={provider} />);
 }
 
 export function NotificationsSettings() {
@@ -167,6 +183,7 @@ export function NotificationsSettings() {
             />
           )}
         </SettingsGroup>
+        <AppriseTemplateEditors saved={baselineProviders} drafts={providers} />
       </div>
     </SettingsPageTemplate>
   );

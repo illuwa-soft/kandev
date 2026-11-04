@@ -448,6 +448,9 @@
     "coordinator"
   ],
   "known_missing_required_tables": {
+    "notification": [
+      "notification_templates"
+    ],
     "task": [
       "agent_delivery_cursors",
       "agent_delivery_cleanup_jobs",

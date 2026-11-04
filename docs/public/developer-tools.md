@@ -30,6 +30,129 @@ An aborted creation leaves no partially configured provider. If the connection f
 reload the settings to confirm the saved state before retrying, especially when adding a provider.
 Saves for separate providers are independent.
 
+### Customize Apprise event messages
+
+> [!EXPERIMENTAL]
+> This feature is provided by the Illuwa `production/mac` compatibility branch.
+> It is not part of an official upstream Kandev release.
+
+After saving an Apprise provider, find its **Apprise message templates** group on
+the same page. Choose an event, edit **Title template** and **Body template**,
+select a synthetic example, and click **Preview template**. Use the shared
+**Save changes** control to persist the draft. **Restore default content** stages
+removal of the override; save to apply it. **Reset** discards unsaved changes.
+
+Templates never enable subscriptions. Keep the desired events checked in the
+separate **Notification Events** section and enable the provider for delivery.
+Preview works even with subscriptions off and does not send anything. The existing
+provider **Send test notification** button does send a fixed test message.
+
+For a clarification email, a title can contain `Answer needed: {{task.title}}` and
+the body can contain `{{default.body}}` followed by `{{session.url}}` on a new
+line. Keep both fields nonempty. Variable buttons append a placeholder to the body;
+the same listed variables can be typed into either field.
+
+#### Syntax and variables
+
+Only literal text and case-sensitive `{{variable.name}}` placeholders are accepted.
+ASCII spaces around a variable name are allowed. Use `\{`, `\}` and `\\` for
+literal braces and backslash. Other escapes, expressions, functions, loops and
+unknown variables are rejected. Substituted values are literal, never executed
+or rendered as another template. Preview output is plain text, not HTML.
+
+The compatibility version offers these four event keys:
+
+| Event | Available event-specific variables | Event destination |
+| --- | --- | --- |
+| `session.turn_finished` | `task.id`, `task.title`, `task.url`, `session.id`, `session.url` | That occurrence's exact session |
+| `session.clarification_requested` | Same task/session variables | That occurrence's exact session |
+| `office.inbox_item` | `inbox.type`, `inbox.title` | Its workspace's Office inbox |
+| `system.update_available` | Conditional update fields below | System Updates or Agents runtime updates |
+
+All events also offer `event.type`, `event.url`, `default.title` and
+`default.body`. `default.*` are the current Kandev strings for that occurrence,
+including task-title fallback and runtime status variants. Deleting an override
+returns to those dynamic defaults; it does not freeze today's sample text.
+
+- `task.id` and `task.title` identify the event's task. `task.url` opens its page.
+- `session.id` and `session.url` identify only the verified event session. Missing,
+  deleted or mismatched sessions never fall back to a primary or sibling session.
+- `inbox.type` is the supplied item type and `inbox.title` is its short title.
+  No question text, permission commands or transcript data is exposed.
+- `update.kind` is `kandev`, `agent_runtime` or `agent_runtime_summary`.
+- Kandev release notices offer `update.version` and optional HTTPS `release.url`.
+- Single-runtime notices offer `update.version`, `update.previous_version`,
+  `update.agent_name` (display name), `update.runtime_id`, `update.status` and
+  `update.count` (`1`). Status is available, succeeded, failed or interrupted.
+- Runtime summaries offer `update.count` and `update.status` (`available`), but
+  no single runtime, agent or version. `event.url` opens the runtime-updates group.
+
+Referencing a known but unavailable value, an invalid stored template, or an
+oversized output causes **both fields** to use Kandev defaults for that delivery.
+The synthetic preview shows this fallback. Choose a missing-session or missing-URL
+example to check it; update examples exercise each status and the summary form.
+
+Source limits are 1,024 UTF-8 bytes for titles, 16,384 for bodies, and 64
+placeholders per field. Output limits are 2,048 title bytes and 65,536 body bytes.
+Titles cannot contain line breaks. Invalid UTF-8 and NUL are rejected. There is
+no code execution, file/environment access, external request or recursive expansion.
+
+#### Configure navigable links
+
+The operator sets an optional startup origin, for example:
+
+```yaml
+notifications:
+  publicBaseUrl: https://kandev.example.com
+```
+
+`KANDEV_NOTIFICATIONS_PUBLIC_BASE_URL` overrides YAML, including an explicitly
+empty value to disable links. Restart after changing it. HTTPS is required except
+for HTTP loopback development. Credentials, queries, fragments and non-root paths
+are rejected. Subpath hosting is not supported by this setting. URLs are never
+guessed from browser request headers, nor do they contain authentication tokens.
+
+Without this setting, absolute in-app URL variables are unavailable. Templates
+using only non-URL values continue to work. Task path and session query values
+are encoded separately; the session route is `/t/{task}?sessionId={session}`.
+External `release.url` is independently validated and does not require this origin.
+Destination pages still enforce normal login and ownership checks.
+
+#### Persistence, errors and API
+
+Overrides are serialized as versioned JSON in the backend database, separate from
+receiver configuration and subscriptions. They survive restart and full database
+backup/restore. Upgrading an old database creates the table empty, changes no
+subscription and preserves existing copy. Provider removal or changing its type
+away from Apprise removes its overrides. Back up operator YAML/service environment
+separately because the public origin is not part of the database backup. Follow
+[database backup and restore](operations.md) and restart after restore. Preserve
+the old binary for rollback; arbitrary schema downgrades are not supported.
+
+Only the provider owner can access its templates, including preview. API routes
+under `/api/v1/notification-providers/{id}` are:
+
+| Method/path | Request and response |
+| --- | --- |
+| `GET /templates` | Catalog, synthetic defaults, variables, samples and nullable saved overrides; no receiver configuration |
+| `PUT /templates/{event}` | `{version:1,title,body,expected_revision}`; null revision creates only if absent, saved opaque revision updates that exact version; returns canonical pair/revision |
+| `DELETE /templates/{event}` | `{expected_revision}`; removes that version, returns 204; already absent succeeds |
+| `POST /templates/{event}/preview` | `{version:1,title,body,sample}`; closed synthetic sample key only; returns title/body, `used_fallback`, safe diagnostics; no persistence or sending |
+
+Unknown variables, invalid syntax/version or provider type return 400; foreign
+and missing providers return identical 404s; stale revisions return 409. Request
+bodies over 128 KiB return 413. Storage failures return 500 without raw SQL or
+template data. Each save is atomic, while multiple provider/event saves are
+independent. Edits made during Save are kept for a later Save. A connection error
+may leave an uncertain outcome: reload saved templates before retrying. Reload
+discards local template drafts. Saved-edit conflicts also require reload.
+
+Never paste receiver URLs or tokens into template text. They are not variables
+and are not included in previews or template diagnostics. Apprise failures omit
+subprocess output rather than copying receiver configuration into errors/logs.
+Apprise's existing CLI receiver arguments may still be visible to local process
+inspection by the OS; this feature does not replace that transport.
+
 ## Use CLI passthrough on a phone
 
 Open a task running in CLI passthrough mode. Its connected terminal shows the

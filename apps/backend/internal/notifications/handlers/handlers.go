@@ -29,6 +29,10 @@ func RegisterRoutes(router *gin.Engine, ctrl *controller.Controller, log *logger
 	api.PATCH("/notification-providers/:id", h.httpUpdateProvider)
 	api.DELETE("/notification-providers/:id", h.httpDeleteProvider)
 	api.POST("/notification-providers/:id/test", h.httpTestProvider)
+	api.GET("/notification-providers/:id/templates", h.httpTemplateCatalog)
+	api.PUT("/notification-providers/:id/templates/:event", h.httpSaveTemplate)
+	api.DELETE("/notification-providers/:id/templates/:event", h.httpDeleteTemplate)
+	api.POST("/notification-providers/:id/templates/:event/preview", h.httpPreviewTemplate)
 }
 
 func (h *Handlers) httpListProviders(c *gin.Context) {

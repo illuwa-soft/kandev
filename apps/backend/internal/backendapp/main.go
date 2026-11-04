@@ -1192,6 +1192,10 @@ func startGatewayAndServe(
 		log.Error("Failed to initialize WebSocket gateway", zap.Error(err))
 		return false
 	}
+	if err := notificationSvc.SetPublicBaseURL(cfg.Notifications.PublicBaseURL); err != nil {
+		log.Error("Invalid notification public URL", zap.Error(err))
+		return false
+	}
 
 	gateways.RegisterSessionStreamNotifications(ctx, eventBus, gateway.Hub, log)
 	if cfg.Features.Canvases {

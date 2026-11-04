@@ -45,6 +45,11 @@ func (r *sqliteRepository) UpdateProviderWithSubscriptions(ctx context.Context, 
 			return err
 		}
 	}
+	if provider.Type != models.ProviderTypeApprise {
+		if _, err := tx.ExecContext(ctx, r.db.Rebind(`DELETE FROM notification_templates WHERE provider_id = ? AND user_id = ?`), provider.ID, provider.UserID); err != nil {
+			return err
+		}
+	}
 	return tx.Commit()
 }
 

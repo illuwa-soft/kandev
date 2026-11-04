@@ -91,6 +91,10 @@ function transport() {
     vi.fn(
       (path: string, init?: RequestInit) =>
         new Promise<Response>((resolve) => {
+          if (path.endsWith("/templates") && (!init?.method || init.method === "GET")) {
+            resolve(new Response(JSON.stringify({ events: [], public_url_configured: false })));
+            return;
+          }
           requests.push({
             path,
             method: init?.method ?? "GET",

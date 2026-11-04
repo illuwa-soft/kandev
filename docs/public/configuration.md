@@ -85,6 +85,18 @@ Some common camelCase keys have explicit compatibility aliases. Use the document
 
 ## Complete backend reference
 
+### Apprise notification destinations (Illuwa compatibility branch)
+
+`notifications.publicBaseUrl` / `KANDEV_NOTIFICATIONS_PUBLIC_BASE_URL` is an
+optional public web origin, default empty, for Apprise template URL variables.
+Environment overrides YAML; restart after changes. Require HTTPS except HTTP
+loopback development. Credentials, query, fragment and non-root paths are rejected.
+This is independent of the GitHub credential broker's URL. Unconfigured origins
+leave in-app URL variables unavailable and never infer a deployment hostname.
+See [Apprise message templates](developer-tools.md#customize-apprise-event-messages)
+for syntax, variables, fallback and backup/restore behavior. This setting is not
+part of an official upstream release.
+
 ### Root and server
 
 <details>

@@ -20,6 +20,7 @@ import (
 // multiUserRepository is a store double that honors provider ownership, so a
 // test can observe a leak instead of having the double paper over it.
 type multiUserRepository struct {
+	templateRepositoryStub
 	mu            sync.Mutex
 	providers     []*models.Provider
 	subscriptions map[string][]string

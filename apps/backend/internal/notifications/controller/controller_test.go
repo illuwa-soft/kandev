@@ -63,6 +63,7 @@ func sameEvents(got, want []string) bool {
 }
 
 type controllerRepository struct {
+	templateRepositoryStub
 	providers map[string]*models.Provider
 	events    map[string][]string
 }

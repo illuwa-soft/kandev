@@ -31,6 +31,7 @@ type Config struct {
 	// live under this root.
 	HomeDir                string                       `mapstructure:"homeDir"`
 	Server                 ServerConfig                 `mapstructure:"server"`
+	Notifications          NotificationsConfig          `mapstructure:"notifications"`
 	Tasks                  TasksConfig                  `mapstructure:"tasks"`
 	Credentials            CredentialsConfig            `mapstructure:"credentials"`
 	Limits                 LimitsConfig                 `mapstructure:"limits"`
@@ -1007,6 +1008,9 @@ func validate(cfg *Config) error {
 	}
 
 	if err := cfg.GitHubCredentialBroker.validate(); err != nil {
+		errs = append(errs, err.Error())
+	}
+	if err := cfg.Notifications.validate(); err != nil {
 		errs = append(errs, err.Error())
 	}
 

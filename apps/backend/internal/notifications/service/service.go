@@ -48,6 +48,8 @@ type TaskContextReader interface {
 type AuthEnforced func() bool
 
 type Service struct {
+	templatesMu        sync.RWMutex
+	publicBaseURL      string
 	defaultProvidersMu sync.Mutex
 	repo               notificationstore.Repository
 	taskRepo           TaskContextReader
@@ -389,25 +391,14 @@ func (s *Service) HandleInboxItem(ctx context.Context, workspaceID, itemType, ti
 		if !containsEvent(events, EventOfficeInboxItem) {
 			continue
 		}
-		if err := s.dispatchGenericNotification(ctx, userID, provider, EventOfficeInboxItem, notifTitle, body); err != nil {
+		if err := s.dispatchProvider(ctx, userID, provider, notificationPayload{
+			EventType: EventOfficeInboxItem, Title: notifTitle, Body: body,
+			Payload: map[string]string{"inbox_title": title, "inbox_type": itemType, "workspace_id": workspaceID},
+		}); err != nil {
 			s.logger.Warn("inbox item notification delivery failed",
 				zap.String("provider_id", provider.ID), zap.Error(err))
 		}
 	}
-}
-
-func (s *Service) dispatchGenericNotification(ctx context.Context, userID string, provider *models.Provider, eventType, title, body string) error {
-	adapter := s.providers[provider.Type]
-	if adapter == nil {
-		return fmt.Errorf("unknown provider type: %s", provider.Type)
-	}
-	return adapter.Send(ctx, providers.Message{
-		EventType: eventType,
-		Title:     title,
-		Body:      body,
-		UserID:    userID,
-		Config:    provider.Config,
-	})
 }
 
 type notificationPayload struct {
@@ -428,6 +419,9 @@ func (s *Service) dispatchProvider(ctx context.Context, userID string, provider 
 	adapter := s.providers[provider.Type]
 	if adapter == nil {
 		return fmt.Errorf("unknown provider type: %s", provider.Type)
+	}
+	if provider.Type == models.ProviderTypeApprise {
+		payload = s.applyTemplate(ctx, userID, provider.ID, payload)
 	}
 	return adapter.Send(ctx, providers.Message{
 		EventType:      payload.EventType,

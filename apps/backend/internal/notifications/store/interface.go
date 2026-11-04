@@ -14,6 +14,9 @@ import (
 var ErrProviderNotFound = errors.New("notification provider not found")
 
 type Repository interface {
+	GetTemplate(ctx context.Context, userID, providerID, event string) (*models.NotificationTemplate, error)
+	SaveTemplate(ctx context.Context, userID, providerID, event, expectedRevision string, template *models.NotificationTemplate) (*models.NotificationTemplate, error)
+	DeleteTemplate(ctx context.Context, userID, providerID, event, expectedRevision string) error
 	// CreateProviderWithSubscriptions saves the complete new configuration atomically.
 	CreateProviderWithSubscriptions(ctx context.Context, provider *models.Provider, events []string) error
 	// UpdateProviderWithSubscriptions is owner-scoped; nil events preserve subscriptions.
